@@ -1,469 +1,34 @@
 """
-Phone Shame - Get off your phone! 📱🤖
+Judgy Reachy No Phone - Get off your phone! 📱🤖
 
 A Reachy Mini app that detects when you pick up your phone
 and shames you with snarky comments.
-
-Stack (100% Free):
-- Detection: YOLOv8 (local)
-- LLM: Groq (free tier) or pre-written lines
-- TTS: Edge TTS (free) or ElevenLabs (free tier)
 """
 
 import time
 import threading
 import logging
 import asyncio
-import random
-import os
-from dataclasses import dataclass
-from collections import deque
-from typing import Optional
-from pathlib import Path
+import base64
 
 import cv2
-import numpy as np
 
 from reachy_mini import ReachyMini, ReachyMiniApp
-from reachy_mini.utils import create_head_pose
 from pydantic import BaseModel
+
+from .config import Config
+from .detection import PhoneDetector
+from .audio import LLMResponder, TextToSpeech
+from .animations import (
+    play_sound_safe,
+    get_animation_for_count,
+    disappointed_shake,
+    approving_nod,
+    idle_breathing
+)
 
 logger = logging.getLogger(__name__)
 
-
-# =============================================================================
-# Configuration
-# =============================================================================
-
-@dataclass
-class Config:
-    # Detection settings
-    PICKUP_THRESHOLD: int = 3          # Frames to confirm phone pickup
-    PUTDOWN_THRESHOLD: int = 15        # Frames to confirm phone put down (~3 sec)
-    DETECTION_CONFIDENCE: float = 0.5  # YOLO confidence threshold
-    COOLDOWN_SECONDS: float = 30.0     # Min time between shames
-
-    # API Keys (optional - leave empty for free defaults)
-    GROQ_API_KEY: str = ""             # Get free at console.groq.com
-    ELEVENLABS_API_KEY: str = ""       # Get free at elevenlabs.io
-
-    # TTS settings
-    EDGE_TTS_VOICE: str = "en-US-GuyNeural"  # Free voice
-    ELEVENLABS_VOICE_ID: str = "JBFqnCBsd6RMkjVDRZzb"  # "George"
-
-
-# =============================================================================
-# Pre-written Snarky Lines (No API needed)
-# =============================================================================
-
-SNARKY_LINES = {
-    1: [
-        "The phone? Already?",
-        "Oh, checking something important?",
-        "And so it begins.",
-        "First one of the day. Let's see how this goes.",
-    ],
-    2: [
-        "Again?",
-        "Twice now.",
-        "Back to the phone I see.",
-        "Round two.",
-    ],
-    3: [
-        "Third time's the charm?",
-        "Hat trick!",
-        "Really? Three times?",
-        "At this point I'm impressed.",
-    ],
-    "many": [
-        "I've lost count.",
-        "Phone addiction is real.",
-        "Your screen time is weeping.",
-        "At this point just glue it to your hand.",
-        "Impressive dedication to distraction.",
-        "The phone isn't going anywhere, you know.",
-        "Do you even remember what you were doing?",
-        "Your focus called. It's filing for divorce.",
-    ]
-}
-
-PRAISE_LINES = [
-    "Good. Back to work.",
-    "There we go.",
-    "Phone down. Respect.",
-    "See? You can do it.",
-    "Freedom!",
-]
-
-
-def get_prewritten_line(phone_count: int) -> str:
-    """Get a random pre-written snarky line based on count."""
-    if phone_count in SNARKY_LINES:
-        return random.choice(SNARKY_LINES[phone_count])
-    return random.choice(SNARKY_LINES["many"])
-
-
-def get_praise_line() -> str:
-    """Get a random praise line for putting phone down."""
-    return random.choice(PRAISE_LINES)
-
-
-# =============================================================================
-# LLM Response (Groq - Free)
-# =============================================================================
-
-class LLMResponder:
-    """Generate snarky responses using Groq (free) or fallback to pre-written."""
-
-    def __init__(self, api_key: str = ""):
-        self.api_key = api_key
-        self.client = None
-
-        if api_key:
-            try:
-                from groq import Groq
-                self.client = Groq(api_key=api_key)
-                logger.info("Groq LLM initialized")
-            except ImportError:
-                logger.warning("groq package not installed, using pre-written lines")
-            except Exception as e:
-                logger.warning(f"Groq init failed: {e}, using pre-written lines")
-
-    def get_response(self, phone_count: int, context: str = "") -> str:
-        """Get a snarky response about phone usage."""
-
-        # Fallback to pre-written if no API
-        if not self.client:
-            return get_prewritten_line(phone_count)
-
-        try:
-            response = self.client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                max_tokens=50,
-                temperature=0.9,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """You are a snarky desk robot watching someone work.
-They just picked up their phone instead of working.
-Be judgmental but funny. One short sentence only.
-No emoji. No hashtags. Keep it under 15 words."""
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Phone pickup #{phone_count} today. {context}"
-                    }
-                ]
-            )
-            return response.choices[0].message.content.strip()
-        except Exception as e:
-            logger.warning(f"Groq API error: {e}, using fallback")
-            return get_prewritten_line(phone_count)
-
-    def get_praise(self) -> str:
-        """Get praise for putting phone down."""
-
-        if not self.client:
-            return get_praise_line()
-
-        try:
-            response = self.client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                max_tokens=30,
-                temperature=0.9,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": """You are a desk robot. User just put their phone down.
-Give brief approval. One short sentence. No emoji."""
-                    },
-                    {
-                        "role": "user",
-                        "content": "User put their phone down."
-                    }
-                ]
-            )
-            return response.choices[0].message.content.strip()
-        except Exception:
-            return get_praise_line()
-
-
-# =============================================================================
-# Text-to-Speech (Edge TTS - Free, or ElevenLabs)
-# =============================================================================
-
-class TextToSpeech:
-    """Convert text to speech using Edge TTS (free) or ElevenLabs."""
-
-    def __init__(self, elevenlabs_key: str = "", voice: str = "en-US-GuyNeural"):
-        self.elevenlabs_key = elevenlabs_key
-        self.edge_voice = voice
-        self.eleven_client = None
-        self.chars_used = 0
-        self.MONTHLY_LIMIT = 9000  # Leave buffer under 10k
-
-        if elevenlabs_key:
-            try:
-                from elevenlabs import ElevenLabs
-                self.eleven_client = ElevenLabs(api_key=elevenlabs_key)
-                logger.info("ElevenLabs TTS initialized")
-            except ImportError:
-                logger.warning("elevenlabs package not installed, using Edge TTS")
-            except Exception as e:
-                logger.warning(f"ElevenLabs init failed: {e}, using Edge TTS")
-
-    async def synthesize(self, text: str, output_path: str = "/tmp/phone_shame_tts.mp3") -> str:
-        """Convert text to speech, return path to audio file."""
-
-        # Try ElevenLabs first if available and under limit
-        if self.eleven_client and (self.chars_used + len(text)) < self.MONTHLY_LIMIT:
-            try:
-                return await self._synthesize_elevenlabs(text, output_path)
-            except Exception as e:
-                logger.warning(f"ElevenLabs failed: {e}, falling back to Edge TTS")
-
-        # Fallback to Edge TTS (always works, unlimited)
-        return await self._synthesize_edge(text, output_path)
-
-    async def _synthesize_elevenlabs(self, text: str, output_path: str) -> str:
-        """Use ElevenLabs for high-quality voice."""
-        audio = self.eleven_client.text_to_speech.convert(
-            text=text,
-            voice_id="JBFqnCBsd6RMkjVDRZzb",  # George - good for snarky
-            model_id="eleven_turbo_v2_5",
-        )
-
-        with open(output_path, "wb") as f:
-            for chunk in audio:
-                f.write(chunk)
-
-        self.chars_used += len(text)
-        logger.debug(f"ElevenLabs TTS: {len(text)} chars, total: {self.chars_used}")
-        return output_path
-
-    async def _synthesize_edge(self, text: str, output_path: str) -> str:
-        """Use Edge TTS (free, unlimited)."""
-        import edge_tts
-
-        communicate = edge_tts.Communicate(text, self.edge_voice)
-        await communicate.save(output_path)
-
-        logger.debug(f"Edge TTS: {len(text)} chars")
-        return output_path
-
-
-# =============================================================================
-# Phone Detection (YOLO)
-# =============================================================================
-
-class PhoneDetector:
-    """Detect phone in camera frame using YOLOv8."""
-
-    PHONE_CLASS_ID = 67  # "cell phone" in COCO dataset
-
-    def __init__(self, confidence: float = 0.5):
-        self.confidence = confidence
-        self.model = None
-        self._initialized = False
-
-        # State tracking
-        self.phone_visible = False
-        self.consecutive_phone = 0
-        self.consecutive_no_phone = 0
-        self.phone_count = 0
-        self.last_reaction_time = 0
-
-        # History for robust detection
-        self.history = deque(maxlen=30)  # ~6 seconds at 5fps
-
-    def initialize(self):
-        """Load YOLO model."""
-        if self._initialized:
-            return True
-
-        try:
-            from ultralytics import YOLO
-            # Use nano model for speed
-            self.model = YOLO("yolov8n.pt")
-            self._initialized = True
-            logger.info("YOLO model loaded")
-            return True
-        except Exception as e:
-            logger.error(f"Failed to load YOLO: {e}")
-            return False
-
-    def detect_phone(self, frame: np.ndarray) -> bool:
-        """Check if phone is in frame."""
-        if not self._initialized:
-            if not self.initialize():
-                return False
-
-        try:
-            results = self.model(frame, verbose=False, conf=self.confidence)
-
-            for result in results:
-                for box in result.boxes:
-                    if int(box.cls) == self.PHONE_CLASS_ID:
-                        return True
-            return False
-
-        except Exception as e:
-            logger.debug(f"Detection error: {e}")
-            return False
-
-    def process_frame(
-        self,
-        frame: np.ndarray,
-        pickup_threshold: int = 3,
-        putdown_threshold: int = 15,
-        cooldown: float = 30.0
-    ) -> Optional[str]:
-        """
-        Process a frame and track phone state.
-
-        Returns:
-            "picked_up" - Phone just picked up (trigger shame)
-            "put_down" - Phone just put down (optional praise)
-            None - No state change
-        """
-        phone_in_frame = self.detect_phone(frame)
-
-        # Add to history
-        self.history.append(phone_in_frame)
-
-        # Update consecutive counters
-        if phone_in_frame:
-            self.consecutive_phone += 1
-            self.consecutive_no_phone = 0
-        else:
-            self.consecutive_no_phone += 1
-            # Don't reset consecutive_phone immediately (handles flickering)
-
-        # Check for phone pickup (quick to detect)
-        if self.consecutive_phone >= pickup_threshold and not self.phone_visible:
-            self.phone_visible = True
-            self.consecutive_no_phone = 0
-
-            # Check cooldown
-            now = time.time()
-            if now - self.last_reaction_time >= cooldown:
-                self.phone_count += 1
-                self.last_reaction_time = now
-                return "picked_up"
-
-        # Check for phone put down (slow to confirm - avoids flickering)
-        if self.consecutive_no_phone >= putdown_threshold and self.phone_visible:
-            self.phone_visible = False
-            self.consecutive_phone = 0
-            return "put_down"
-
-        return None
-
-    def get_stats(self) -> dict:
-        """Get detection statistics."""
-        return {
-            "phone_count": self.phone_count,
-            "phone_visible": self.phone_visible,
-            "history_size": len(self.history),
-            "recent_detections": sum(self.history) if self.history else 0,
-        }
-
-    def reset_count(self):
-        """Reset daily count."""
-        self.phone_count = 0
-
-
-# =============================================================================
-# Robot Animations
-# =============================================================================
-
-def play_sound_safe(reachy: ReachyMini, sound_name: str):
-    """Play a sound, catching any errors."""
-    try:
-        reachy.media.play_sound(sound_name)
-    except Exception as e:
-        logger.debug(f"Sound playback error: {e}")
-
-
-def curious_look(reachy: ReachyMini):
-    """Curious head tilt - first offense."""
-    head = create_head_pose(z=5, roll=15, mm=True, degrees=True)
-    reachy.goto_target(head=head, antennas=[0.4, 0.2], duration=0.4, method="minjerk")
-    time.sleep(0.3)
-
-
-def disappointed_shake(reachy: ReachyMini):
-    """Disappointed head shake - repeat offense."""
-    for _ in range(3):
-        head = create_head_pose(roll=-15, mm=True, degrees=True)
-        reachy.goto_target(head=head, antennas=[-0.1, -0.1], duration=0.15)
-        time.sleep(0.15)
-        head = create_head_pose(roll=15, mm=True, degrees=True)
-        reachy.goto_target(head=head, antennas=[-0.1, -0.1], duration=0.15)
-        time.sleep(0.15)
-
-    # Return to neutral
-    head = create_head_pose(roll=0, mm=True, degrees=True)
-    reachy.goto_target(head=head, antennas=[0.0, 0.0], duration=0.3)
-
-
-def dramatic_sigh(reachy: ReachyMini):
-    """Dramatic sigh and look away - many offenses."""
-    # Look up (exasperated)
-    head = create_head_pose(z=10, roll=0, mm=True, degrees=True)
-    reachy.goto_target(head=head, antennas=[0.5, 0.5], duration=0.4)
-    time.sleep(0.4)
-
-    # Slump down
-    head = create_head_pose(z=-5, roll=0, mm=True, degrees=True)
-    reachy.goto_target(head=head, antennas=[-0.3, -0.3], duration=0.6)
-    time.sleep(0.8)
-
-    # Look away
-    reachy.goto_target(body_yaw=np.deg2rad(30), duration=0.5)
-    time.sleep(1.0)
-
-    # Return
-    head = create_head_pose(z=0, roll=0, mm=True, degrees=True)
-    reachy.goto_target(head=head, antennas=[0.0, 0.0], body_yaw=0, duration=0.5)
-
-
-def approving_nod(reachy: ReachyMini):
-    """Approving nod - phone put down."""
-    for _ in range(2):
-        head = create_head_pose(z=-3, mm=True, degrees=True)
-        reachy.goto_target(head=head, antennas=[0.2, 0.2], duration=0.2)
-        time.sleep(0.2)
-        head = create_head_pose(z=3, mm=True, degrees=True)
-        reachy.goto_target(head=head, antennas=[0.2, 0.2], duration=0.2)
-        time.sleep(0.2)
-
-    # Return to neutral
-    head = create_head_pose(z=0, mm=True, degrees=True)
-    reachy.goto_target(head=head, antennas=[0.1, 0.1], duration=0.3)
-
-
-def idle_breathing(reachy: ReachyMini):
-    """Gentle idle animation."""
-    reachy.goto_target(antennas=[0.15, 0.15], duration=1.5, method="minjerk")
-    time.sleep(1.5)
-    reachy.goto_target(antennas=[0.05, 0.05], duration=1.5, method="minjerk")
-    time.sleep(1.5)
-
-
-def get_animation_for_count(count: int):
-    """Get appropriate animation based on offense count."""
-    if count <= 1:
-        return curious_look
-    elif count <= 3:
-        return disappointed_shake
-    else:
-        return dramatic_sigh
-
-
-# =============================================================================
-# Main App
-# =============================================================================
 
 class JudgyReachyNoPhone(ReachyMiniApp):
     """Phone Shame - Get off your phone! 📱🤖"""
@@ -497,6 +62,79 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.current_streak_start = None
         self.frozen_streak = 0  # Stores streak when monitoring is stopped
 
+        # Camera thread state
+        self.latest_frame = None
+        self.latest_frame_jpeg = None  # JPEG encoded frame for web display
+        self.camera_running = False
+        self.camera_fps = 0
+        self.detection_event_queue = []
+
+    def _camera_thread(self, webcam, stop_event: threading.Event):
+        """Fast camera capture and encoding thread."""
+        fps_counter = 0
+        fps_start = time.time()
+        detection_skip = 0
+
+        logger.info("Camera thread started")
+
+        try:
+            while not stop_event.is_set() and self.camera_running:
+                ret, frame = webcam.read()
+                if not ret:
+                    time.sleep(0.01)
+                    continue
+
+                # Store frame for detection
+                self.latest_frame = frame.copy()
+
+                # Calculate FPS
+                fps_counter += 1
+                if time.time() - fps_start >= 1.0:
+                    self.camera_fps = fps_counter
+                    fps_counter = 0
+                    fps_start = time.time()
+
+                # Run detection every 3rd frame
+                if self.is_monitoring and (detection_skip % 3 == 0):
+                    try:
+                        event = self.detector.process_frame(
+                            frame,
+                            pickup_threshold=self.config.PICKUP_THRESHOLD,
+                            putdown_threshold=self.config.PUTDOWN_THRESHOLD,
+                            cooldown=self.config.COOLDOWN_SECONDS
+                        )
+                        # Store event for main thread to handle
+                        if event:
+                            self.detection_event_queue.append(event)
+                    except Exception as e:
+                        logger.error(f"Detection error: {e}")
+
+                detection_skip += 1
+
+                # Draw detection boxes
+                frame_with_boxes = self.detector.draw_detections(frame)
+
+                # Draw FPS
+                cv2.putText(frame_with_boxes, f"FPS: {self.camera_fps}", (10, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+
+                # Draw model name
+                cv2.putText(frame_with_boxes, "Model: YOLO", (10, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+
+                status = "📱 MONITORING" if self.is_monitoring else "⏸️ PAUSED"
+                cv2.putText(frame_with_boxes, status, (10, 90),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+
+                # Encode as JPEG for web display
+                _, buffer = cv2.imencode('.jpg', frame_with_boxes, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                self.latest_frame_jpeg = base64.b64encode(buffer).decode('utf-8')
+
+                time.sleep(0.01)  # ~100 FPS max
+
+        finally:
+            logger.info("Camera thread stopped")
+
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         """Main loop."""
 
@@ -511,37 +149,48 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         # Initialize detector
         self.detector.initialize()
 
-        # Main loop
+        # For testing: Use Mac webcam instead of robot camera
+        USE_WEBCAM = True  # Set to False to use robot camera
+        webcam = None
+        if USE_WEBCAM:
+            logger.info("Opening Mac webcam for testing...")
+            webcam = cv2.VideoCapture(0)
+            if not webcam.isOpened():
+                logger.error("Failed to open webcam!")
+                webcam = None
+            else:
+                logger.info("Webcam opened successfully!")
+                self.camera_running = True
+
+                # Start fast camera thread
+                camera_thread = threading.Thread(
+                    target=self._camera_thread,
+                    args=(webcam, stop_event),
+                    daemon=True
+                )
+                camera_thread.start()
+
+        # Detection and robot control loop (separate from camera display)
         breath_counter = 0
         BREATH_INTERVAL = 8
         last_tick = time.time()
 
-        while not stop_event.is_set():
-            current_time = time.time()
-            delta = current_time - last_tick
-            last_tick = current_time
+        try:
+            while not stop_event.is_set():
+                current_time = time.time()
+                delta = current_time - last_tick
+                last_tick = current_time
 
-            if self.is_monitoring:
-                try:
-                    # Get frame from robot camera
-                    frame = reachy_mini.media.get_frame()
-
-                    if frame is not None:
-                        # Process frame
-                        event = self.detector.process_frame(
-                            frame,
-                            pickup_threshold=self.config.PICKUP_THRESHOLD,
-                            putdown_threshold=self.config.PUTDOWN_THRESHOLD,
-                            cooldown=self.config.COOLDOWN_SECONDS
-                        )
-
+                # Process detection events from camera thread
+                while self.detection_event_queue:
+                    event = self.detection_event_queue.pop(0)
+                    try:
                         if event == "picked_up":
                             self._handle_phone_pickup(reachy_mini)
                         elif event == "put_down" and self.praise_enabled:
                             self._handle_phone_putdown(reachy_mini)
-
-                except Exception as e:
-                    logger.debug(f"Frame processing error: {e}")
+                    except Exception as e:
+                        logger.error(f"Event handling error: {e}")
 
                 # Idle breathing when not reacting
                 breath_counter += delta
@@ -553,7 +202,15 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                         except:
                             pass
 
-            time.sleep(0.2)  # 5 Hz
+                # Slow loop since detection happens independently
+                time.sleep(0.2)
+
+        finally:
+            # Stop camera thread
+            self.camera_running = False
+            if webcam is not None:
+                webcam.release()
+                logger.info("Webcam released")
 
         # Cleanup
         self.is_monitoring = False
@@ -629,6 +286,13 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             cooldown: int = 30
             praise: bool = True
 
+        # API endpoint: Get video frame
+        @self.settings_app.get("/api/video-frame")
+        def get_video_frame():
+            if self.latest_frame_jpeg:
+                return {"frame": self.latest_frame_jpeg, "fps": self.camera_fps}
+            return {"frame": None, "fps": 0}
+
         # API endpoint: Get status
         @self.settings_app.get("/api/status")
         def get_status():
@@ -653,7 +317,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             else:
                 status_text = "✅ Phone-free"
 
-            mode_text = f"{'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
+            mode_text = f"YOLO | {'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
 
             return {
                 "status_text": status_text,
@@ -717,10 +381,6 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             mins = int((seconds % 3600) // 60)
             return f"{hours}h{mins}m"
 
-
-# =============================================================================
-# Entry Point
-# =============================================================================
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
