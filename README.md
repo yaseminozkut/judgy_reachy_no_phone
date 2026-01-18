@@ -1,5 +1,5 @@
 ---
-title: Phone Shame
+title: Judgy Reachy No Phone
 emoji: 📱
 colorFrom: red
 colorTo: orange
@@ -11,7 +11,7 @@ tags:
  - reachy_mini_python_app
 ---
 
-# 📱 Phone Shame 🤖
+# 📱 Judgy Reachy No Phone 🤖
 
 **A Reachy Mini app that detects when you pick up your phone and shames you with snarky comments.**
 

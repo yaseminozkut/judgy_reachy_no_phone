@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 class JudgyReachyNoPhone(ReachyMiniApp):
-    """Phone Shame - Get off your phone! 📱🤖"""
+    """Judgy Reachy No Phone - Get off your phone! 📱🤖"""
 
     custom_app_url: str | None = "http://0.0.0.0:8042"
     dont_start_webserver: bool = False

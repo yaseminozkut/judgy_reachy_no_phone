@@ -103,7 +103,7 @@ class TextToSpeech:
             except Exception as e:
                 logger.warning(f"ElevenLabs init failed: {e}, using Edge TTS")
 
-    async def synthesize(self, text: str, output_path: str = "/tmp/phone_shame_tts.mp3") -> str:
+    async def synthesize(self, text: str, output_path: str = "/tmp/judgy_reachy_tts.mp3") -> str:
         """Convert text to speech, return path to audio file."""
 
         # Try ElevenLabs first if available and under limit

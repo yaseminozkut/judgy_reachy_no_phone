@@ -1,4 +1,4 @@
-"""Robot animations for Phone Shame app."""
+"""Robot animations for Judgy Reachy No Phone app."""
 
 import time
 import logging

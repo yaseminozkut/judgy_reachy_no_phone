@@ -1,4 +1,4 @@
-"""Configuration and constants for Phone Shame app."""
+"""Configuration and constants for Judgy Reachy No Phone app."""
 
 import random
 from dataclasses import dataclass
