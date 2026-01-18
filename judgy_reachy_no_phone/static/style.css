@@ -261,3 +261,18 @@ body {
     opacity: 0.6;
     cursor: not-allowed;
 }
+
+.reset-section {
+    padding: 0 20px 20px 20px;
+    text-align: center;
+}
+
+.btn-reset {
+    background: #f59e0b;
+    color: white;
+    width: 100%;
+}
+
+.btn-reset:hover {
+    background: #d97706;
+}

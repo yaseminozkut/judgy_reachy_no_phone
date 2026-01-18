@@ -139,6 +139,8 @@ class PhoneDetector:
         if self.consecutive_no_phone >= putdown_threshold and self.phone_visible:
             self.phone_visible = False
             self.consecutive_phone = 0
+            # Reset cooldown timer so next pickup can trigger immediately
+            self.last_reaction_time = 0
             return "put_down"
 
         return None

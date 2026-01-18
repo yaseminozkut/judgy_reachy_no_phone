@@ -77,11 +77,11 @@ def approving_nod(reachy: ReachyMini):
 
 
 def idle_breathing(reachy: ReachyMini):
-    """Gentle idle animation."""
-    reachy.goto_target(antennas=[0.15, 0.15], duration=1.5, method="minjerk")
-    time.sleep(1.5)
-    reachy.goto_target(antennas=[0.05, 0.05], duration=1.5, method="minjerk")
-    time.sleep(1.5)
+    """Gentle idle animation - kept short to avoid blocking events."""
+    reachy.goto_target(antennas=[0.15, 0.15], duration=0.8, method="minjerk")
+    time.sleep(0.8)
+    reachy.goto_target(antennas=[0.05, 0.05], duration=0.8, method="minjerk")
+    time.sleep(0.8)
 
 
 def get_animation_for_count(count: int):

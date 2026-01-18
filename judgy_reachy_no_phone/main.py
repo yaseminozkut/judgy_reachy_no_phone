@@ -53,6 +53,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.is_running = False
         self.is_monitoring = False
         self.praise_enabled = True
+        self.has_previous_session = False  # Track if there's data to continue from
         self._lock = threading.Lock()
 
         # Stats
@@ -61,6 +62,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.longest_streak = 0
         self.current_streak_start = None
         self.frozen_streak = 0  # Stores streak when monitoring is stopped
+        self.frozen_phone_count = 0  # Store phone count when stopped
 
         # Camera thread state
         self.latest_frame = None
@@ -192,18 +194,19 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     except Exception as e:
                         logger.error(f"Event handling error: {e}")
 
-                # Idle breathing when not reacting
+                # Idle breathing when not reacting - only if no pending events
                 breath_counter += delta
                 if breath_counter >= BREATH_INTERVAL:
                     breath_counter = 0
-                    if self.is_monitoring and not self.detector.phone_visible:
+                    # Only do idle breathing if no events pending (to avoid blocking)
+                    if self.is_monitoring and not self.detector.phone_visible and len(self.detection_event_queue) == 0:
                         try:
                             idle_breathing(reachy_mini)
                         except:
                             pass
 
-                # Slow loop since detection happens independently
-                time.sleep(0.2)
+                # Faster loop for responsive event processing
+                time.sleep(0.05)  # 20 FPS = 50ms max delay
 
         finally:
             # Stop camera thread
@@ -217,6 +220,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
     def _handle_phone_pickup(self, reachy: ReachyMini):
         """Handle phone pickup event."""
+        start_time = time.time()
         count = self.detector.phone_count
         self.total_shames += 1
 
@@ -230,22 +234,29 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         logger.info(f"Phone pickup #{count}!")
 
         # Get snarky response
+        llm_start = time.time()
         text = self.llm.get_response(count)
-        logger.info(f"Response: {text}")
+        logger.info(f"Response: {text} (LLM took {time.time() - llm_start:.2f}s)")
 
         # Generate and play audio
         try:
+            tts_start = time.time()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             audio_path = loop.run_until_complete(self.tts.synthesize(text))
             loop.close()
+            logger.info(f"TTS took {time.time() - tts_start:.2f}s")
 
             # Play audio
+            audio_start = time.time()
             reachy.media.play_sound(audio_path)
+            logger.info(f"Audio playback took {time.time() - audio_start:.2f}s")
 
             # Animate based on offense count
             animation = get_animation_for_count(count)
             animation(reachy)
+
+            logger.info(f"Total pickup handling: {time.time() - start_time:.2f}s")
 
         except Exception as e:
             logger.error(f"Shame response error: {e}")
@@ -255,22 +266,31 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
     def _handle_phone_putdown(self, reachy: ReachyMini):
         """Handle phone put down event."""
+        start_time = time.time()
         logger.info("Phone put down!")
 
         # Start new streak
         self.current_streak_start = time.time()
 
         # Get praise
+        llm_start = time.time()
         text = self.llm.get_praise()
+        logger.info(f"Praise: {text} (LLM took {time.time() - llm_start:.2f}s)")
 
         try:
+            tts_start = time.time()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             audio_path = loop.run_until_complete(self.tts.synthesize(text))
             loop.close()
+            logger.info(f"TTS took {time.time() - tts_start:.2f}s")
 
+            audio_start = time.time()
             reachy.media.play_sound(audio_path)
+            logger.info(f"Audio playback took {time.time() - audio_start:.2f}s")
+
             approving_nod(reachy)
+            logger.info(f"Total putdown handling: {time.time() - start_time:.2f}s")
 
         except Exception as e:
             logger.debug(f"Praise error: {e}")
@@ -285,6 +305,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             eleven_key: str = ""
             cooldown: int = 30
             praise: bool = True
+            reset: bool = False  # If True, reset all stats (Start Fresh)
 
         # API endpoint: Get video frame
         @self.settings_app.get("/api/video-frame")
@@ -320,6 +341,14 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
             mode_text = f"YOLO | {'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
 
+            # Determine button text
+            if self.is_monitoring:
+                button_text = "🛑 Stop Monitoring"
+            elif self.has_previous_session:
+                button_text = "▶️ Continue Monitoring"
+            else:
+                button_text = "▶️ Start Monitoring"
+
             return {
                 "status_text": status_text,
                 "phone_count": stats['phone_count'],
@@ -327,22 +356,30 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 "current_streak": current_streak_display,
                 "longest_streak": longest_streak_display,
                 "mode": mode_text,
-                "is_monitoring": self.is_monitoring
+                "is_monitoring": self.is_monitoring,
+                "button_text": button_text,
+                "has_previous_session": self.has_previous_session
             }
 
         # API endpoint: Toggle monitoring
         @self.settings_app.post("/api/toggle")
         def toggle_monitoring(req: ToggleRequest):
             if self.is_monitoring:
-                # Stop monitoring
+                # Stop monitoring - save current state
                 if self.current_streak_start:
                     self.frozen_streak = time.time() - self.current_streak_start
                 else:
                     self.frozen_streak = 0
+
+                self.frozen_phone_count = self.detector.phone_count
+                self.has_previous_session = True
                 self.is_monitoring = False
-                return {"button_text": "▶️ Start Monitoring"}
+
+                # Return appropriate button text based on whether there's data
+                button_text = "▶️ Continue Monitoring" if self.has_previous_session else "▶️ Start Monitoring"
+                return {"button_text": button_text}
             else:
-                # Start monitoring
+                # Start or Continue monitoring
                 if req.groq_key:
                     self.llm = LLMResponder(api_key=req.groq_key)
                 if req.eleven_key:
@@ -353,10 +390,38 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
                 self.is_monitoring = True
                 self.session_start = time.time()
-                self.detector.reset_count()
-                self.current_streak_start = time.time()
-                self.frozen_streak = 0
+
+                if req.reset or not self.has_previous_session:
+                    # Start Fresh - reset everything
+                    self.detector.reset_count()
+                    self.total_shames = 0
+                    self.longest_streak = 0
+                    self.current_streak_start = time.time()
+                    self.frozen_streak = 0
+                    self.frozen_phone_count = 0
+                    self.has_previous_session = False
+                else:
+                    # Continue - restore previous state
+                    self.detector.phone_count = self.frozen_phone_count
+                    self.current_streak_start = time.time() - self.frozen_streak if self.frozen_streak > 0 else time.time()
+
                 return {"button_text": "🛑 Stop Monitoring"}
+
+        # API endpoint: Reset all stats
+        @self.settings_app.post("/api/reset")
+        def reset_stats():
+            """Reset all statistics and start fresh."""
+            self.detector.reset_count()
+            self.total_shames = 0
+            self.longest_streak = 0
+            self.current_streak_start = None
+            self.frozen_streak = 0
+            self.frozen_phone_count = 0
+            self.has_previous_session = False
+            return {
+                "success": True,
+                "button_text": "▶️ Start Monitoring"
+            }
 
         # API endpoint: Test shame
         @self.settings_app.post("/api/test")

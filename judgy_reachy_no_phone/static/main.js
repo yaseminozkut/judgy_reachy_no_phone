@@ -57,6 +57,18 @@ async function updateDisplay() {
         document.getElementById('longest-streak').textContent = data.longest_streak;
         document.getElementById('mode-text').innerHTML = '<strong>Mode:</strong> ' + data.mode;
 
+        // Update button text
+        const toggleBtn = document.getElementById('toggle-btn');
+        toggleBtn.textContent = data.button_text;
+
+        // Show/hide reset button based on session state
+        const resetSection = document.getElementById('reset-section');
+        if (data.has_previous_session && !data.is_monitoring) {
+            resetSection.style.display = 'block';
+        } else {
+            resetSection.style.display = 'none';
+        }
+
         // Track monitoring state
         isMonitoring = data.is_monitoring;
 
@@ -80,21 +92,31 @@ async function toggleMonitoring() {
                 groq_key: groqKey,
                 eleven_key: elevenKey,
                 cooldown: parseInt(cooldown),
-                praise: praise
+                praise: praise,
+                reset: false  // Normal toggle, not a reset
             })
         });
 
-        const data = await response.json();
-
-        // Update button text
-        const btn = document.getElementById('toggle-btn');
-        btn.textContent = data.button_text;
-
-        // Update display immediately
+        // Update display immediately (button text will come from status API)
         await updateDisplay();
 
     } catch (e) {
         console.error('Toggle failed:', e);
+    }
+}
+
+// Reset all stats
+async function resetStats() {
+    if (!confirm('Reset all statistics? This will clear your phone count, shames, and streaks.')) {
+        return;
+    }
+
+    try {
+        await fetch('/api/reset', { method: 'POST' });
+        // Update display after reset
+        await updateDisplay();
+    } catch (e) {
+        console.error('Reset failed:', e);
     }
 }
 
@@ -117,6 +139,7 @@ document.getElementById('cooldown').addEventListener('input', (e) => {
 // Button handlers
 document.getElementById('toggle-btn').addEventListener('click', toggleMonitoring);
 document.getElementById('test-btn').addEventListener('click', testShame);
+document.getElementById('reset-btn').addEventListener('click', resetStats);
 
 // Auto-update every 100ms for smooth video
 setInterval(() => {

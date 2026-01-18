@@ -10,8 +10,8 @@ class Config:
     # Detection settings
     PICKUP_THRESHOLD: int = 3          # Frames to confirm phone pickup
     PUTDOWN_THRESHOLD: int = 15        # Frames to confirm phone put down (~3 sec)
-    DETECTION_CONFIDENCE: float = 0.5  # Higher = fewer false positives
-    COOLDOWN_SECONDS: float = 30.0     # Min time between shames
+    DETECTION_CONFIDENCE: float = 0.3  # Higher = fewer false positives
+    COOLDOWN_SECONDS: float = 10.0     # Min time between shames
 
     # API Keys (optional - leave empty for free defaults)
     GROQ_API_KEY: str = ""             # Get free at console.groq.com
@@ -26,38 +26,40 @@ class Config:
 SNARKY_LINES = {
     1: [
         "The phone? Already?",
-        "Oh, checking something important?",
-        "And so it begins.",
-        "First one of the day. Let's see how this goes.",
+        #"Oh, checking something important?",
     ],
     2: [
-        "Again?",
+        #"Again?",
         "Twice now.",
-        "Back to the phone I see.",
-        "Round two.",
+        #"Back to the phone I see.",
+        #"Hey!",
+        #"Focus!",
     ],
     3: [
-        "Third time's the charm?",
-        "Hat trick!",
+        #"Third time's the charm?",
+        #"Stop it!",
         "Really? Three times?",
-        "At this point I'm impressed.",
+        #"Put your phone down.",
     ],
     "many": [
         "I've lost count.",
+        "I'm disappointed in you.",
+        "Hey!",
+        "Focus!",
+        "Stop it!",
+        "Put your phone down.",
         "Phone addiction is real.",
         "Your screen time is weeping.",
         "At this point just glue it to your hand.",
-        "Impressive dedication to distraction.",
         "The phone isn't going anywhere, you know.",
         "Do you even remember what you were doing?",
-        "Your focus called. It's filing for divorce.",
     ]
 }
 
 PRAISE_LINES = [
     "Good. Back to work.",
     "There we go.",
-    "Phone down. Respect.",
+    "Finally.",
     "See? You can do it.",
     "Freedom!",
 ]
