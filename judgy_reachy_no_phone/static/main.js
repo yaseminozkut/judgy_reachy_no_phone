@@ -57,12 +57,6 @@ async function updateDisplay() {
         document.getElementById('longest-streak').textContent = data.longest_streak;
         document.getElementById('mode-text').innerHTML = '<strong>Mode:</strong> ' + data.mode;
 
-        console.log('Streak update:', {
-            current: data.current_streak,
-            longest: data.longest_streak,
-            monitoring: data.is_monitoring
-        });
-
         // Track monitoring state
         isMonitoring = data.is_monitoring;
 
