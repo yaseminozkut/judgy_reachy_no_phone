@@ -12,6 +12,28 @@ function formatDuration(seconds) {
     return hours + 'h' + mins + 'm';
 }
 
+// Update video feed
+async function updateVideo() {
+    try {
+        const response = await fetch('/api/video-frame');
+        const data = await response.json();
+
+        const videoFeed = document.getElementById('video-feed');
+        const placeholder = document.getElementById('video-placeholder');
+
+        if (data.frame) {
+            videoFeed.src = 'data:image/jpeg;base64,' + data.frame;
+            videoFeed.classList.add('active');
+            placeholder.classList.add('hidden');
+        } else {
+            videoFeed.classList.remove('active');
+            placeholder.classList.remove('hidden');
+        }
+    } catch (e) {
+        console.error('Video update failed:', e);
+    }
+}
+
 // Update display from API data
 async function updateDisplay() {
     try {
@@ -95,8 +117,12 @@ document.getElementById('cooldown').addEventListener('input', (e) => {
 document.getElementById('toggle-btn').addEventListener('click', toggleMonitoring);
 document.getElementById('test-btn').addEventListener('click', testShame);
 
-// Auto-update every 500ms - only updates text content, no DOM manipulation
-setInterval(updateDisplay, 500);
+// Auto-update every 100ms for smooth video
+setInterval(() => {
+    updateVideo();
+    updateDisplay();
+}, 100);
 
 // Initial update
 updateDisplay();
+updateVideo();

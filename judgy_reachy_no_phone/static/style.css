@@ -56,6 +56,34 @@ body {
     color: #6b7280;
 }
 
+.video-container {
+    padding: 0 20px 20px 20px;
+    position: relative;
+}
+
+#video-feed {
+    width: 100%;
+    border-radius: 10px;
+    display: none;
+}
+
+#video-feed.active {
+    display: block;
+}
+
+.video-placeholder {
+    background: #f3f4f6;
+    border-radius: 10px;
+    padding: 60px 20px;
+    text-align: center;
+    color: #6b7280;
+    font-size: 16px;
+}
+
+.video-placeholder.hidden {
+    display: none;
+}
+
 #status-text.monitoring {
     color: #22c55e;
 }
