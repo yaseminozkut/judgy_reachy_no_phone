@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "judgy_reachy_no_phone"
+version = "0.1.0"
+description = "A Reachy Mini app that detects phone pickups and shames you with snarky comments"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "reachy-mini",
+    "opencv-python",
+    "numpy",
+    "gradio",
+    "ultralytics",
+    "edge-tts"
+]
+keywords = ["reachy-mini-app"]
+
+[project.optional-dependencies]
+llm = ["groq"]
+premium-tts = ["elevenlabs"]
+
+[project.entry-points."reachy_mini_apps"]
+judgy_reachy_no_phone = "judgy_reachy_no_phone.main:JudgyReachyNoPhone"
+
+[tool.setuptools]
+package-dir = { "" = "." }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+judgy_reachy_no_phone = ["**/*"] # Also include all non-.py files
