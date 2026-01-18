@@ -53,8 +53,15 @@ async function updateDisplay() {
         // Update stats - only change text content, not DOM structure
         document.getElementById('phone-count').textContent = data.phone_count;
         document.getElementById('total-shames').textContent = data.total_shames;
-        document.getElementById('streak-display').textContent = data.streak;
+        document.getElementById('current-streak').textContent = data.current_streak;
+        document.getElementById('longest-streak').textContent = data.longest_streak;
         document.getElementById('mode-text').innerHTML = '<strong>Mode:</strong> ' + data.mode;
+
+        console.log('Streak update:', {
+            current: data.current_streak,
+            longest: data.longest_streak,
+            monitoring: data.is_monitoring
+        });
 
         // Track monitoring state
         isMonitoring = data.is_monitoring;

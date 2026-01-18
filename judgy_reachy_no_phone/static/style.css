@@ -94,7 +94,7 @@ body {
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 15px;
     padding: 0 20px 20px 20px;
 }
@@ -117,6 +117,10 @@ body {
     background: #eff6ff;
 }
 
+.stat-card.purple {
+    background: #faf5ff;
+}
+
 .stat-value {
     font-size: 32px;
     font-weight: 700;
@@ -133,6 +137,10 @@ body {
 
 .stat-card.blue .stat-value {
     color: #3b82f6;
+}
+
+.stat-card.purple .stat-value {
+    color: #a855f7;
 }
 
 .stat-label {

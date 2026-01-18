@@ -307,7 +307,10 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             else:
                 current_streak = self.frozen_streak
 
-            streak_display = self._format_duration(max(current_streak, self.longest_streak))
+            current_streak_display = self._format_duration(current_streak)
+            longest_streak_display = self._format_duration(self.longest_streak)
+
+            logger.debug(f"Streaks - Current: {current_streak:.1f}s ({current_streak_display}), Longest: {self.longest_streak:.1f}s ({longest_streak_display}), Monitoring: {self.is_monitoring}, Start: {self.current_streak_start}")
 
             # Status text
             if not self.is_monitoring:
@@ -323,7 +326,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 "status_text": status_text,
                 "phone_count": stats['phone_count'],
                 "total_shames": self.total_shames,
-                "streak": streak_display,
+                "current_streak": current_streak_display,
+                "longest_streak": longest_streak_display,
                 "mode": mode_text,
                 "is_monitoring": self.is_monitoring
             }
