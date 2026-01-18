@@ -1,27 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <title>Reachy Mini example app template</title>
+    <title>Phone Shame - Reachy Mini</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/static/style.css">
 </head>
-
 <body>
-    <h1>Reachy Mini – Control Panel</h1>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="emoji">📱🤖</div>
+            <h1>Phone Shame</h1>
+            <p class="subtitle">Get off your phone!</p>
+        </div>
 
-    <div id="controls">
-        <label style="display:flex; align-items:center; gap:8px;">
-            <input type="checkbox" id="antenna-checkbox" checked>
-            Antennas
-        </label>
+        <!-- Status -->
+        <div class="status" id="status">
+            <span id="status-text">Not monitoring</span>
+        </div>
 
-        <button id="sound-btn">Play Sound</button>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card red">
+                <div class="stat-value" id="phone-count">0</div>
+                <div class="stat-label">Pickups Today</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-value" id="total-shames">0</div>
+                <div class="stat-label">Total Shames</div>
+            </div>
+            <div class="stat-card blue">
+                <div class="stat-value" id="streak-display">0s</div>
+                <div class="stat-label">Best Streak</div>
+            </div>
+        </div>
+
+        <!-- Mode Info -->
+        <div class="mode-info" id="mode-text">
+            <strong>Mode:</strong> Pre-written lines → Edge TTS
+        </div>
+
+        <!-- Settings -->
+        <details class="settings">
+            <summary>⚙️ Settings</summary>
+            <div class="settings-content">
+                <div class="form-group">
+                    <label for="groq-key">Groq API Key (optional)</label>
+                    <input type="password" id="groq-key" placeholder="Get free at console.groq.com">
+                </div>
+                <div class="form-group">
+                    <label for="eleven-key">ElevenLabs API Key (optional)</label>
+                    <input type="password" id="eleven-key" placeholder="Get free at elevenlabs.io">
+                </div>
+                <div class="form-group">
+                    <label for="cooldown">Cooldown between shames (seconds): <span id="cooldown-value">30</span></label>
+                    <input type="range" id="cooldown" min="10" max="120" value="30" step="5">
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="praise-toggle" checked>
+                        Praise when phone is put down
+                    </label>
+                </div>
+            </div>
+        </details>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="toggle-btn" class="btn btn-primary">▶️ Start Monitoring</button>
+            <button id="test-btn" class="btn btn-secondary">🧪 Test</button>
+        </div>
     </div>
 
-    <div id="status">Antennas status: running</div>
     <script src="/static/main.js"></script>
 </body>
-
 </html>

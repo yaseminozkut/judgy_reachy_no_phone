@@ -23,10 +23,10 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-import gradio as gr
 
 from reachy_mini import ReachyMini, ReachyMiniApp
 from reachy_mini.utils import create_head_pose
+from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
@@ -468,8 +468,8 @@ def get_animation_for_count(count: int):
 class JudgyReachyNoPhone(ReachyMiniApp):
     """Phone Shame - Get off your phone! 📱🤖"""
 
-    custom_app_url: str | None = "http://localhost:7863"
-    dont_start_webserver: bool = True
+    custom_app_url: str | None = "http://0.0.0.0:8042"
+    dont_start_webserver: bool = False
     request_media_backend: str | None = "default"
 
     def __init__(self):
@@ -620,196 +620,88 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             approving_nod(reachy)
 
     def _run_ui(self, reachy_mini: ReachyMini, stop_event: threading.Event):
-        """Run Gradio UI."""
+        """Setup FastAPI routes for the UI."""
 
-        def start_monitoring(groq_key, eleven_key, cooldown, praise):
-            # Update config
-            if groq_key:
-                self.llm = LLMResponder(api_key=groq_key)
-            if eleven_key:
-                self.tts = TextToSpeech(elevenlabs_key=eleven_key)
+        # API models
+        class ToggleRequest(BaseModel):
+            groq_key: str = ""
+            eleven_key: str = ""
+            cooldown: int = 30
+            praise: bool = True
 
-            self.config.COOLDOWN_SECONDS = cooldown
-            self.praise_enabled = praise
-
-            self.is_monitoring = True
-            self.session_start = time.time()
-            self.detector.reset_count()
-            self.current_streak_start = time.time()
-            self.frozen_streak = 0  # Reset frozen streak when starting
-
-            return get_status(), "🛑 Stop Monitoring", gr.update(interactive=True)
-
-        def stop_monitoring():
-            # Freeze the current streak at the moment of stopping
-            if self.current_streak_start:
-                self.frozen_streak = time.time() - self.current_streak_start
-            else:
-                self.frozen_streak = 0
-
-            self.is_monitoring = False
-            return get_status(), "▶️ Start Monitoring", gr.update(interactive=True)
-
-        def toggle_monitoring(groq_key, eleven_key, cooldown, praise):
-            if self.is_monitoring:
-                return stop_monitoring()
-            else:
-                return start_monitoring(groq_key, eleven_key, cooldown, praise)
-
+        # API endpoint: Get status
+        @self.settings_app.get("/api/status")
         def get_status():
             stats = self.detector.get_stats()
 
             # Calculate streak
             if self.is_monitoring:
-                # When monitoring, calculate in real-time
                 if self.current_streak_start:
                     current_streak = time.time() - self.current_streak_start
                 else:
                     current_streak = 0
             else:
-                # When not monitoring, use the frozen streak
                 current_streak = self.frozen_streak
 
             streak_display = self._format_duration(max(current_streak, self.longest_streak))
 
-            # Status color
+            # Status text
             if not self.is_monitoring:
-                status_color = "#6b7280"
                 status_text = "Not monitoring"
             elif stats["phone_visible"]:
-                status_color = "#ef4444"
                 status_text = "📱 PHONE DETECTED!"
             else:
-                status_color = "#22c55e"
                 status_text = "✅ Phone-free"
 
-            return f"""
-            <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px;">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="font-size: 48px; margin-bottom: 10px;">📱🤖</div>
-                    <div style="font-size: 18px; font-weight: 600; color: {status_color};">
-                        {status_text}
-                    </div>
-                </div>
+            mode_text = f"{'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
 
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0;">
-                    <div style="background: #fef2f2; padding: 15px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 32px; font-weight: 700; color: #ef4444;">
-                            {stats['phone_count']}
-                        </div>
-                        <div style="font-size: 12px; color: #6b7280; text-transform: uppercase;">
-                            Pickups Today
-                        </div>
-                    </div>
+            return {
+                "status_text": status_text,
+                "phone_count": stats['phone_count'],
+                "total_shames": self.total_shames,
+                "streak": streak_display,
+                "mode": mode_text,
+                "is_monitoring": self.is_monitoring
+            }
 
-                    <div style="background: #f0fdf4; padding: 15px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 32px; font-weight: 700; color: #22c55e;">
-                            {self.total_shames}
-                        </div>
-                        <div style="font-size: 12px; color: #6b7280; text-transform: uppercase;">
-                            Total Shames
-                        </div>
-                    </div>
+        # API endpoint: Toggle monitoring
+        @self.settings_app.post("/api/toggle")
+        def toggle_monitoring(req: ToggleRequest):
+            if self.is_monitoring:
+                # Stop monitoring
+                if self.current_streak_start:
+                    self.frozen_streak = time.time() - self.current_streak_start
+                else:
+                    self.frozen_streak = 0
+                self.is_monitoring = False
+                return {"button_text": "▶️ Start Monitoring"}
+            else:
+                # Start monitoring
+                if req.groq_key:
+                    self.llm = LLMResponder(api_key=req.groq_key)
+                if req.eleven_key:
+                    self.tts = TextToSpeech(elevenlabs_key=req.eleven_key)
 
-                    <div style="background: #eff6ff; padding: 15px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 32px; font-weight: 700; color: #3b82f6;">
-                            {streak_display}
-                        </div>
-                        <div style="font-size: 12px; color: #6b7280; text-transform: uppercase;">
-                            Best Streak
-                        </div>
-                    </div>
-                </div>
+                self.config.COOLDOWN_SECONDS = req.cooldown
+                self.praise_enabled = req.praise
 
-                <div style="background: #f3f4f6; padding: 12px; border-radius: 8px; margin-top: 15px;">
-                    <div style="font-size: 13px; color: #6b7280;">
-                        <strong>Mode:</strong>
-                        {"LLM + TTS" if self.llm.client else "Pre-written lines"}
-                        → {"ElevenLabs" if self.tts.eleven_client else "Edge TTS"}
-                    </div>
-                </div>
-            </div>
-            """
+                self.is_monitoring = True
+                self.session_start = time.time()
+                self.detector.reset_count()
+                self.current_streak_start = time.time()
+                self.frozen_streak = 0
+                return {"button_text": "🛑 Stop Monitoring"}
 
+        # API endpoint: Test shame
+        @self.settings_app.post("/api/test")
         def test_shame():
-            """Test the shame response."""
             if not self.is_monitoring:
-                self.is_monitoring = True  # Temporarily enable
-
+                self.is_monitoring = True
             self.detector.phone_count += 1
             self._handle_phone_pickup(reachy_mini)
+            return {"success": True}
 
-            return get_status()
-
-        # Build UI
-        with gr.Blocks(
-            title="Phone Shame",
-            css="""
-                .gradio-container { max-width: 500px !important; margin: auto; }
-                footer { display: none !important; }
-            """
-        ) as demo:
-
-            gr.HTML("""
-            <div style="background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
-                        color: white; padding: 20px; text-align: center;
-                        border-radius: 12px; margin-bottom: 15px;">
-                <h1 style="margin: 0; font-size: 24px;">📱 Phone Shame 🤖</h1>
-                <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">
-                    Get off your phone!
-                </p>
-            </div>
-            """)
-
-            status_html = gr.HTML(value=get_status())
-
-            with gr.Accordion("⚙️ Settings", open=False):
-                groq_key = gr.Textbox(
-                    label="Groq API Key (optional)",
-                    placeholder="Get free at console.groq.com",
-                    type="password"
-                )
-                eleven_key = gr.Textbox(
-                    label="ElevenLabs API Key (optional)",
-                    placeholder="Get free at elevenlabs.io",
-                    type="password"
-                )
-                cooldown = gr.Slider(
-                    minimum=10, maximum=120, value=30, step=5,
-                    label="Cooldown between shames (seconds)"
-                )
-                praise_toggle = gr.Checkbox(
-                    value=True,
-                    label="Praise when phone is put down"
-                )
-
-            with gr.Row():
-                toggle_btn = gr.Button(
-                    "▶️ Start Monitoring",
-                    variant="primary",
-                    size="lg",
-                    scale=2
-                )
-                test_btn = gr.Button(
-                    "🧪 Test",
-                    size="lg",
-                    scale=1
-                )
-
-            # Auto-refresh
-            timer = gr.Timer(value=0.5)
-            timer.tick(fn=get_status, outputs=[status_html])
-
-            # Handlers
-            toggle_btn.click(
-                fn=toggle_monitoring,
-                inputs=[groq_key, eleven_key, cooldown, praise_toggle],
-                outputs=[status_html, toggle_btn, toggle_btn]
-            )
-            test_btn.click(fn=test_shame, outputs=[status_html])
-
-        demo.launch(server_port=7863, quiet=True, prevent_thread_lock=True)
-
+        # Keep thread alive
         while not stop_event.is_set():
             time.sleep(1)
 
