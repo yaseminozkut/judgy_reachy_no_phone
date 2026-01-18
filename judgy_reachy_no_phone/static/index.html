@@ -2,61 +2,177 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Judgy Reachy No Phone - Reachy Mini</title>
+    <title>Judgy Reachy No Phone</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <div class="emoji">📱🤖</div>
-            <h1>Judgy Reachy No Phone</h1>
-            <p class="subtitle">Get off your phone!</p>
+    <!-- Header -->
+    <header class="top-header">
+        <div class="header-left">
+            <div class="header-icons">
+                <span class="header-icon">📱</span>
+                <span class="header-icon">🤖</span>
+            </div>
+            <div class="header-title">
+                <h1>Judgy Reachy <span class="accent">No Phone</span></h1>
+                <p class="subtitle">Get off your phone!</p>
+            </div>
         </div>
+        <button class="settings-btn" id="settings-btn">⚙️</button>
+    </header>
 
-        <!-- Status -->
-        <div class="status" id="status">
-            <span id="status-text">Not monitoring</span>
-        </div>
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Left Column -->
+        <div class="left-column">
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    <span id="status-text">Not Monitoring</span>
+                </div>
+                <div class="mode-badge">
+                    Mode: <span id="mode-name">Mixtape</span>
+                </div>
+            </div>
 
-        <!-- Camera Feed -->
-        <div class="video-container">
-            <img id="video-feed" src="" alt="Camera feed will appear here when monitoring starts">
-            <div id="video-placeholder" class="video-placeholder">
-                📷 Camera feed will appear here
+            <!-- Camera View -->
+            <div class="camera-container">
+                <div class="camera-frame">
+                    <div class="standby-badge">
+                        <span class="standby-dot"></span>
+                        <span>Standby</span>
+                    </div>
+                    <img id="video-feed" src="" alt="Camera feed">
+                    <div id="video-placeholder" class="video-placeholder">
+                        <svg class="camera-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                        <div class="camera-status">Camera Inactive</div>
+                        <div class="camera-message">Waiting for camera connection...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Control Buttons -->
+            <div class="controls">
+                <button id="toggle-btn" class="btn btn-start">
+                    <span class="btn-icon">▶</span>
+                    <span class="btn-text">Start Monitoring</span>
+                </button>
+                <button id="test-btn" class="btn btn-test">⚡ Test</button>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <div class="stat-card red">
+                    <div class="stat-value" id="phone-count">0</div>
+                    <div class="stat-label">PICKUPS TODAY</div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-value" id="total-shames">0</div>
+                    <div class="stat-label">TOTAL SHAMES</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-value" id="current-streak">0s</div>
+                    <div class="stat-label">CURRENT STREAK</div>
+                </div>
+                <div class="stat-card purple">
+                    <div class="stat-value" id="longest-streak">0s</div>
+                    <div class="stat-label">LONGEST STREAK</div>
+                </div>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="reset-section" id="reset-section" style="display: none;">
+                <button id="reset-btn" class="btn btn-reset">🔄 Reset Stats</button>
             </div>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="stats-grid">
-            <div class="stat-card red">
-                <div class="stat-value" id="phone-count">0</div>
-                <div class="stat-label">Pickups Today</div>
-            </div>
-            <div class="stat-card green">
-                <div class="stat-value" id="total-shames">0</div>
-                <div class="stat-label">Total Shames</div>
-            </div>
-            <div class="stat-card blue">
-                <div class="stat-value" id="current-streak">0s</div>
-                <div class="stat-label">Current Streak</div>
-            </div>
-            <div class="stat-card purple">
-                <div class="stat-value" id="longest-streak">0s</div>
-                <div class="stat-label">Longest Streak</div>
+        <!-- Right Column - Personality Selector -->
+        <div class="right-column">
+            <div class="personality-panel">
+                <h2 class="panel-title">🤖 Robot Personality</h2>
+                <p class="panel-subtitle">Choose how the robot judges you</p>
+
+                <div class="personality-list">
+                    <div class="personality-card active" data-personality="mixtape">
+                        <div class="personality-emoji">🎵</div>
+                        <div class="personality-info">
+                            <div class="personality-name">Mixtape</div>
+                            <div class="personality-desc">Random Mix</div>
+                        </div>
+                        <div class="personality-check">✓</div>
+                    </div>
+
+                    <div class="personality-card" data-personality="angry_boss">
+                        <div class="personality-emoji">😠</div>
+                        <div class="personality-info">
+                            <div class="personality-name">Angry Boss</div>
+                            <div class="personality-desc">Stern & demanding</div>
+                        </div>
+                        <div class="personality-check">✓</div>
+                    </div>
+
+                    <div class="personality-card" data-personality="sarcastic">
+                        <div class="personality-emoji">🎭</div>
+                        <div class="personality-info">
+                            <div class="personality-name">Sarcastic</div>
+                            <div class="personality-desc">Witty & ironic</div>
+                        </div>
+                        <div class="personality-check">✓</div>
+                    </div>
+
+                    <div class="personality-card" data-personality="disappointed_parent">
+                        <div class="personality-emoji">😔</div>
+                        <div class="personality-info">
+                            <div class="personality-name">Disappointed Parent</div>
+                            <div class="personality-desc">Guilt-tripping</div>
+                        </div>
+                        <div class="personality-check">✓</div>
+                    </div>
+
+                    <div class="personality-card" data-personality="motivational_coach">
+                        <div class="personality-emoji">💪</div>
+                        <div class="personality-info">
+                            <div class="personality-name">Motivational Coach</div>
+                            <div class="personality-desc">Encouraging</div>
+                        </div>
+                        <div class="personality-check">✓</div>
+                    </div>
+
+                    <div class="personality-card" data-personality="funny">
+                        <div class="personality-emoji">🤡</div>
+                        <div class="personality-info">
+                            <div class="personality-name">Funny/Silly</div>
+                            <div class="personality-desc">Playful & goofy</div>
+                        </div>
+                        <div class="personality-check">✓</div>
+                    </div>
+
+                    <div class="personality-card" data-personality="professional">
+                        <div class="personality-emoji">🎩</div>
+                        <div class="personality-info">
+                            <div class="personality-name">Professional</div>
+                            <div class="personality-desc">Formal & polite</div>
+                        </div>
+                        <div class="personality-check">✓</div>
+                    </div>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Mode Info -->
-        <div class="mode-info" id="mode-text">
-            <strong>Mode:</strong> Pre-written lines → Edge TTS
-        </div>
-
-        <!-- Settings -->
-        <details class="settings">
-            <summary>⚙️ Settings</summary>
-            <div class="settings-content">
+    <!-- Settings Modal -->
+    <div class="settings-modal" id="settings-modal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>⚙️ Settings</h2>
+                <button class="close-btn" id="close-settings">✕</button>
+            </div>
+            <div class="settings-body">
                 <div class="form-group">
                     <label for="groq-key">Groq API Key (optional)</label>
                     <input type="password" id="groq-key" placeholder="Get free at console.groq.com">
@@ -66,8 +182,8 @@
                     <input type="password" id="eleven-key" placeholder="Get free at elevenlabs.io">
                 </div>
                 <div class="form-group">
-                    <label for="cooldown">Cooldown between shames (seconds): <span id="cooldown-value">30</span></label>
-                    <input type="range" id="cooldown" min="10" max="120" value="30" step="5">
+                    <label for="cooldown">Cooldown between shames (seconds): <span id="cooldown-value">10</span></label>
+                    <input type="range" id="cooldown" min="10" max="120" value="10" step="5">
                 </div>
                 <div class="form-group">
                     <label class="checkbox-label">
@@ -75,30 +191,7 @@
                         Praise when phone is put down
                     </label>
                 </div>
-                <div class="form-group">
-                    <label for="personality">Robot Personality</label>
-                    <select id="personality">
-                        <option value="mixtape">🎵 Mixtape (Random Mix)</option>
-                        <option value="angry_boss">😠 Angry Boss</option>
-                        <option value="sarcastic">🎭 Sarcastic</option>
-                        <option value="disappointed_parent">😔 Disappointed Parent</option>
-                        <option value="motivational_coach">💪 Motivational Coach</option>
-                        <option value="funny">🤡 Funny/Silly</option>
-                        <option value="professional">🎩 Professional</option>
-                    </select>
-                </div>
             </div>
-        </details>
-
-        <!-- Controls -->
-        <div class="controls">
-            <button id="toggle-btn" class="btn btn-primary">▶️ Start Monitoring</button>
-            <button id="test-btn" class="btn btn-secondary">🧪 Test</button>
-        </div>
-
-        <!-- Reset Stats Button -->
-        <div class="reset-section" id="reset-section" style="display: none;">
-            <button id="reset-btn" class="btn btn-reset">🔄 Reset Stats</button>
         </div>
     </div>
 

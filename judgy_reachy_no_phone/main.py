@@ -113,20 +113,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
                 detection_skip += 1
 
-                # Draw detection boxes
+                # Draw detection boxes only (no text overlays)
                 frame_with_boxes = self.detector.draw_detections(frame)
-
-                # Draw FPS
-                cv2.putText(frame_with_boxes, f"FPS: {self.camera_fps}", (10, 30),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-
-                # Draw model name
-                cv2.putText(frame_with_boxes, "Model: YOLO", (10, 60),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-
-                status = "📱 MONITORING" if self.is_monitoring else "⏸️ PAUSED"
-                cv2.putText(frame_with_boxes, status, (10, 90),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
                 # Encode as JPEG for web display
                 _, buffer = cv2.imencode('.jpg', frame_with_boxes, [cv2.IMWRITE_JPEG_QUALITY, 85])
