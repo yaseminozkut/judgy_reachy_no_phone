@@ -306,6 +306,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             cooldown: int = 30
             praise: bool = True
             reset: bool = False  # If True, reset all stats (Start Fresh)
+            personality: str = "mixtape"  # Robot personality
 
         # API endpoint: Get video frame
         @self.settings_app.get("/api/video-frame")
@@ -381,9 +382,15 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             else:
                 # Start or Continue monitoring
                 if req.groq_key:
-                    self.llm = LLMResponder(api_key=req.groq_key)
+                    logger.info(f"Initializing LLM with Groq API key: {req.groq_key[:10]}... personality: {req.personality}")
+                    self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
+                else:
+                    logger.info("No Groq API key provided, using pre-written lines")
                 if req.eleven_key:
+                    logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}...")
                     self.tts = TextToSpeech(elevenlabs_key=req.eleven_key)
+                else:
+                    logger.info("No ElevenLabs key provided, using Edge TTS")
 
                 self.config.COOLDOWN_SECONDS = req.cooldown
                 self.praise_enabled = req.praise

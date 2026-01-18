@@ -2,7 +2,7 @@
 
 import logging
 
-from .config import get_prewritten_line, get_praise_line
+from .config import get_prewritten_line, get_praise_line, PERSONALITIES
 
 logger = logging.getLogger(__name__)
 
@@ -10,15 +10,16 @@ logger = logging.getLogger(__name__)
 class LLMResponder:
     """Generate snarky responses using Groq (free) or fallback to pre-written."""
 
-    def __init__(self, api_key: str = ""):
+    def __init__(self, api_key: str = "", personality: str = "mixtape"):
         self.api_key = api_key
         self.client = None
+        self.personality = personality
 
         if api_key:
             try:
                 from groq import Groq
                 self.client = Groq(api_key=api_key)
-                logger.info("Groq LLM initialized")
+                logger.info(f"Groq LLM initialized with personality: {PERSONALITIES.get(personality, {}).get('name', personality)}")
             except ImportError:
                 logger.warning("groq package not installed, using pre-written lines")
             except Exception as e:
@@ -32,21 +33,42 @@ class LLMResponder:
             return get_prewritten_line(phone_count)
 
         try:
+            # Get personality
+            personality_data = PERSONALITIES.get(self.personality, PERSONALITIES["mixtape"])
+            personality_prompt = personality_data["shame"]
+
+            # Build context based on count
+            if phone_count == 1:
+                context_hint = "First time today."
+            elif phone_count == 2:
+                context_hint = "Second time."
+            elif phone_count == 3:
+                context_hint = "Third time."
+            elif phone_count <= 5:
+                context_hint = f"{phone_count} times now."
+            else:
+                context_hint = f"{phone_count} times today!"
+
             response = self.client.chat.completions.create(
                 model="llama-3.1-8b-instant",
-                max_tokens=50,
-                temperature=0.9,
+                max_tokens=20,
+                temperature=1.2,  # Higher for more creativity
                 messages=[
                     {
                         "role": "system",
-                        "content": """You are a snarky desk robot watching someone work.
-They just picked up their phone instead of working.
-Be judgmental but funny. One short sentence only.
-No emoji. No hashtags. Keep it under 15 words."""
+                        "content": f"""TASK: Generate a NEGATIVE/SCOLDING response because someone just picked up their phone (BAD behavior).
+
+PERSONALITY: {personality_prompt}
+
+RULES:
+- Maximum 8 words. Prefer 3-5 words.
+- You can mention the count or not - be creative.
+- Be CRITICAL/NEGATIVE about picking up the phone.
+- No emoji. No hashtags."""
                     },
                     {
                         "role": "user",
-                        "content": f"Phone pickup #{phone_count} today. {context}"
+                        "content": f"Phone pickup #{phone_count} today. {context_hint}"
                     }
                 ]
             )
@@ -62,19 +84,29 @@ No emoji. No hashtags. Keep it under 15 words."""
             return get_praise_line()
 
         try:
+            # Get personality
+            personality_data = PERSONALITIES.get(self.personality, PERSONALITIES["mixtape"])
+            personality_prompt = personality_data["praise"]
+
             response = self.client.chat.completions.create(
                 model="llama-3.1-8b-instant",
-                max_tokens=30,
-                temperature=0.9,
+                max_tokens=15,
+                temperature=1.1,  # Higher for variety
                 messages=[
                     {
                         "role": "system",
-                        "content": """You are a desk robot. User just put their phone down.
-Give brief approval. One short sentence. No emoji."""
+                        "content": f"""TASK: Generate a POSITIVE/APPROVING response because someone just put their phone down (GOOD behavior).
+
+PERSONALITY: {personality_prompt}
+
+RULES:
+- Maximum 5 words. Prefer 2-3 words.
+- Be POSITIVE/APPROVING about putting the phone down.
+- No emoji."""
                     },
                     {
                         "role": "user",
-                        "content": "User put their phone down."
+                        "content": "Phone down."
                     }
                 ]
             )

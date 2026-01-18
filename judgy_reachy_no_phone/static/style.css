@@ -197,12 +197,15 @@ body {
 }
 
 .form-group input[type="password"],
-.form-group input[type="text"] {
+.form-group input[type="text"],
+.form-group select {
     width: 100%;
     padding: 8px 12px;
     border: 1px solid #d1d5db;
     border-radius: 6px;
     font-size: 14px;
+    background-color: white;
+    cursor: pointer;
 }
 
 .form-group input[type="range"] {

@@ -83,6 +83,7 @@ async function toggleMonitoring() {
     const elevenKey = document.getElementById('eleven-key').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+    const personality = document.getElementById('personality').value;
 
     try {
         const response = await fetch('/api/toggle', {
@@ -93,7 +94,8 @@ async function toggleMonitoring() {
                 eleven_key: elevenKey,
                 cooldown: parseInt(cooldown),
                 praise: praise,
-                reset: false  // Normal toggle, not a reset
+                reset: false,  // Normal toggle, not a reset
+                personality: personality
             })
         });
 
