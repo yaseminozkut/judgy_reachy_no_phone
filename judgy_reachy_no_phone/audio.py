@@ -106,14 +106,18 @@ class TextToSpeech:
     async def synthesize(self, text: str, output_path: str = "/tmp/phone_shame_tts.mp3") -> str:
         """Convert text to speech, return path to audio file."""
 
+        logger.info(f"TTS synthesize called with text: '{text}', output: {output_path}")
+
         # Try ElevenLabs first if available and under limit
         if self.eleven_client and (self.chars_used + len(text)) < self.MONTHLY_LIMIT:
             try:
+                logger.info("Using ElevenLabs TTS")
                 return await self._synthesize_elevenlabs(text, output_path)
             except Exception as e:
                 logger.warning(f"ElevenLabs failed: {e}, falling back to Edge TTS")
 
         # Fallback to Edge TTS (always works, unlimited)
+        logger.info("Using Edge TTS (free)")
         return await self._synthesize_edge(text, output_path)
 
     async def _synthesize_elevenlabs(self, text: str, output_path: str) -> str:
@@ -134,10 +138,18 @@ class TextToSpeech:
 
     async def _synthesize_edge(self, text: str, output_path: str) -> str:
         """Use Edge TTS (free, unlimited)."""
-        import edge_tts
+        try:
+            import edge_tts
+            logger.info(f"Edge TTS imported successfully, voice: {self.edge_voice}")
+        except ImportError as e:
+            logger.error(f"Failed to import edge_tts: {e}")
+            raise
 
+        logger.info(f"Creating Edge TTS communicate object for text: '{text}'")
         communicate = edge_tts.Communicate(text, self.edge_voice)
+
+        logger.info(f"Saving audio to: {output_path}")
         await communicate.save(output_path)
 
-        logger.debug(f"Edge TTS: {len(text)} chars")
+        logger.info(f"Edge TTS complete: {len(text)} chars, file saved to {output_path}")
         return output_path

@@ -235,20 +235,25 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
         # Generate and play audio
         try:
+            logger.info(f"Starting TTS synthesis for: '{text}'")
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             audio_path = loop.run_until_complete(self.tts.synthesize(text))
             loop.close()
+            logger.info(f"TTS synthesis complete, audio saved to: {audio_path}")
 
             # Play audio
-            reachy.media.play(audio_path)
+            logger.info(f"Playing audio file...")
+            reachy.media.play_sound(audio_path)
+            logger.info("Audio playback completed")
 
             # Animate based on offense count
             animation = get_animation_for_count(count)
             animation(reachy)
 
         except Exception as e:
-            logger.error(f"Shame response error: {e}")
+            logger.error(f"Shame response error: {e}", exc_info=True)
+            logger.error(f"Error type: {type(e).__name__}")
             # Fallback: just animate
             play_sound_safe(reachy, "confused1.wav")
             disappointed_shake(reachy)
@@ -269,7 +274,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             audio_path = loop.run_until_complete(self.tts.synthesize(text))
             loop.close()
 
-            reachy.media.play(audio_path)
+            reachy.media.play_sound(audio_path)
             approving_nod(reachy)
 
         except Exception as e:
