@@ -495,6 +495,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.total_shames = 0
         self.longest_streak = 0
         self.current_streak_start = None
+        self.frozen_streak = 0  # Stores streak when monitoring is stopped
 
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         """Main loop."""
@@ -635,10 +636,17 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             self.session_start = time.time()
             self.detector.reset_count()
             self.current_streak_start = time.time()
+            self.frozen_streak = 0  # Reset frozen streak when starting
 
             return get_status(), "🛑 Stop Monitoring", gr.update(interactive=True)
 
         def stop_monitoring():
+            # Freeze the current streak at the moment of stopping
+            if self.current_streak_start:
+                self.frozen_streak = time.time() - self.current_streak_start
+            else:
+                self.frozen_streak = 0
+
             self.is_monitoring = False
             return get_status(), "▶️ Start Monitoring", gr.update(interactive=True)
 
@@ -652,10 +660,15 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             stats = self.detector.get_stats()
 
             # Calculate streak
-            if self.current_streak_start:
-                current_streak = time.time() - self.current_streak_start
+            if self.is_monitoring:
+                # When monitoring, calculate in real-time
+                if self.current_streak_start:
+                    current_streak = time.time() - self.current_streak_start
+                else:
+                    current_streak = 0
             else:
-                current_streak = 0
+                # When not monitoring, use the frozen streak
+                current_streak = self.frozen_streak
 
             streak_display = self._format_duration(max(current_streak, self.longest_streak))
 
