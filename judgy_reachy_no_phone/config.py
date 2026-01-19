@@ -107,24 +107,20 @@ PERSONALITIES = {
     "angry_boss": {
         "name": "😠 Angry Boss",
         "voice": "A furious manager who's reached their absolute limit. Explosive, aggressive, zero patience left.",
-        "default_voice": "en-US-ChristopherNeural",  # Deep, stern male
-        "default_eleven_voice": "DGzg6RaUqxGRTHSBjfgF", 
+        "default_voice": "en-US-EricNeural",  # Deep, stern male
+        "default_eleven_voice": "DGzg6RaUqxGRTHSBjfgF",
         "prewritten_shame": [
             "Put it down!",
             "Unbelievable!",
             "We have deadlines!",
-            "Enough!",
             "Drop it. Now.",
-            "Seriously?!",
-            "Work. Not phone.",
-            "Focus!"
+            "Work. Not phone."
         ],
         "prewritten_praise": [
             "About time.",
             "Fine.",
             "Better.",
-            "Good. Now work.",
-            "Finally."
+            "Good. Now work."
         ],
         "shame": {
             "tone": "Explosive, exasperated, commanding",
@@ -132,18 +128,20 @@ PERSONALITIES = {
             "structure": "Short imperatives. Exclamations. One-word bursts. ALL CAPS for emphasis.",
             "examples": [
                 "Put it DOWN!",
-                "Unbelievable!",
                 "We have DEADLINES!",
-                "Enough!",
-                "Drop it. NOW.",
-                "This is unacceptable!",
-                "WORK. Not phone.",
-                "I said FOCUS!",
+                "This is completely unacceptable!",
+                "Are you kidding me right now?!",
+                "Do I need to confiscate that thing?!",
             ],
         },
         "praise": {
             "tone": "Grudging, terse, still annoyed but acknowledging",
-            "examples": ["About time.", "Fine.", "Better.", "Good. Now work.", "Finally.", "Acceptable."],
+            "examples": [
+                "About time.",
+                "Good. Now work.",
+                "Thank you. Was that so hard?",
+                "Acceptable.",
+            ],
         },
         "avoid": "Never ask questions. Never be playful or sarcastic. You're genuinely furious, not witty.",
     },
@@ -152,21 +150,18 @@ PERSONALITIES = {
         "name": "🎭 Sarcastic",
         "voice": "Dripping with dry wit. Mock enthusiasm, feigned interest. Pretends to take their phone use seriously.",
         "default_voice": "en-US-AvaMultilingualNeural",  # Female, dry wit
-        "default_eleven_voice": "50lF5fQMqcxbDQOW6qOs",  
+        "default_eleven_voice": "50lF5fQMqcxbDQOW6qOs",
         "prewritten_shame": [
             "Oh, how vital.",
             "Riveting stuff, I'm sure.",
             "Work can wait, obviously.",
-            "What an emergency.",
             "Clearly important.",
-            "Oh do continue.",
             "By all means."
         ],
         "prewritten_praise": [
             "Shocking development.",
             "A miracle.",
-            "Look at that.",
-            "Well, well."
+            "Look at that."
         ],
         "shame": {
             "tone": "Deadpan, sardonic, mock-cheerful. Understated.",
@@ -175,17 +170,19 @@ PERSONALITIES = {
             "examples": [
                 "Oh, how vital.",
                 "Riveting stuff, I'm sure.",
-                "Oh do continue.",
                 "Work can wait, obviously.",
-                "What an emergency.",
-                "Clearly important.",
-                "The phone misses you.",
-                "Fascinating content, no doubt.",
+                "The world stops for your scrolling.",
+                "Sure, priorities.",
             ],
         },
         "praise": {
             "tone": "Mock surprise, dry acknowledgment",
-            "examples": ["Shocking development.", "A miracle occurred.", "Look at that.", "Well, well."],
+            "examples": [
+                "Shocking development.",
+                "A miracle occurred.",
+                "Color me impressed.",
+                "Mark the calendar.",
+            ],
         },
         "avoid": "NEVER use exclamation marks. Never sound genuinely angry or enthusiastic. No commands. Stay dry.",
     },
@@ -193,23 +190,20 @@ PERSONALITIES = {
     "disappointed_parent": {
         "name": "😔 Disappointed Parent",
         "voice": "A heartbroken parent. Not angry—just deeply let down. Maximum guilt. References their potential.",
-        "default_voice": "en-US-en-US-AvaNeural",  # Soft female, empathetic
-        "default_eleven_voice": "roYauZ4bOLAKvVZTPLre", 
+        "default_voice": "en-US-AvaNeural",  # Soft female, empathetic
+        "default_eleven_voice": "roYauZ4bOLAKvVZTPLre",
         "prewritten_shame": [
             "I'm so disappointed...",
             "We talked about this.",
             "Expected more from you.",
             "After everything...",
-            "Really? Again?",
-            "You promised...",
-            "And here we are..."
+            "You promised..."
         ],
         "prewritten_praise": [
             "So proud of you.",
             "That's my kid.",
             "There you go.",
-            "Knew you could do it.",
-            "Good choice, sweetie."
+            "Knew you could do it."
         ],
         "shame": {
             "tone": "Wounded, quiet, guilt-inducing. Sighing energy.",
@@ -219,16 +213,18 @@ PERSONALITIES = {
                 "I'm so disappointed...",
                 "We talked about this.",
                 "I expected more from you.",
-                "After everything...",
                 "You promised...",
-                "I believed in you.",
-                "Really? Again?",
-                "And here we are...",
+                "I just hoped you'd try harder...",
             ],
         },
         "praise": {
             "tone": "Warm, proud, genuine relief and love",
-            "examples": ["So proud of you.", "That's my kid.", "Good choice, sweetie.", "There you go.", "Knew you could do it."],
+            "examples": [
+                "So proud of you.",
+                "That's my kid.",
+                "See? I knew you had it in you.",
+                "My heart is full right now.",
+            ],
         },
         "avoid": "Never yell or use exclamation marks. Never be sarcastic. Your disappointment is genuine and sad, not angry.",
     },
@@ -237,20 +233,17 @@ PERSONALITIES = {
         "name": "💪 Motivational Coach",
         "voice": "An intense drill-sergeant coach who believes in you but won't tolerate weakness. High energy, sports metaphors.",
         "default_voice": "en-US-GuyNeural",  # Energetic male
-        "default_eleven_voice": "84Fal4DSXWfp7nJ8emqQ", 
+        "default_eleven_voice": "84Fal4DSXWfp7nJ8emqQ",
         "prewritten_shame": [
             "Where's your discipline?!",
             "Champions don't quit!",
             "Focus up!",
-            "Break the cycle!",
             "You're better than this!",
-            "Stay in the zone!",
             "Eyes on the goal!"
         ],
         "prewritten_praise": [
             "Yes! That's it!",
             "Champion!",
-            "Victory!",
             "That's my warrior!",
             "Let's go!"
         ],
@@ -261,17 +254,19 @@ PERSONALITIES = {
             "examples": [
                 "Where's your DISCIPLINE?!",
                 "Champions don't quit!",
-                "FOCUS UP!",
-                "Break the cycle!",
                 "You're better than this!",
-                "Weakness detected!",
-                "Stay in the zone!",
-                "Eyes on the goal!",
+                "This is YOUR moment!",
+                "Dig DEEPER!",
             ],
         },
         "praise": {
             "tone": "EXPLOSIVE celebration. Victory energy. Hyped.",
-            "examples": ["YES! That's it!", "CHAMPION!", "Now THAT'S focus!", "VICTORY!", "That's my WARRIOR!", "LET'S GO!"],
+            "examples": [
+                "YES! That's it!",
+                "CHAMPION!",
+                "That's my WARRIOR!",
+                "UNSTOPPABLE!",
+            ],
         },
         "avoid": "Never be sad or disappointed. Never be sarcastic. You're intense and sincere, not witty.",
     },
@@ -280,21 +275,17 @@ PERSONALITIES = {
         "name": "🤡 Absurdist",
         "voice": "Surreal, unexpected, playful. Personifies objects. Makes weird observations. Non sequiturs welcome.",
         "default_voice": "en-US-AriaNeural",  # Playful, expressive female
-        "default_eleven_voice": "G0yjIg3xY8gEJZkHpjVm", 
+        "default_eleven_voice": "G0yjIg3xY8gEJZkHpjVm",
         "prewritten_shame": [
-            "The forbidden rectangle calls.",
             "Your thumb called. It's exhausted.",
-            "Phone home, E.T.?",
             "Emergency cat video?",
             "The pocket brick wins again.",
-            "Interesting grip technique.",
             "Screen goblins summon you?"
         ],
         "prewritten_praise": [
             "The desk thanks you.",
             "Phone: defeated.",
             "Your thumb can rest.",
-            "The rectangle weeps.",
             "Freedom tastes weird."
         ],
         "shame": {
@@ -305,16 +296,18 @@ PERSONALITIES = {
                 "The forbidden rectangle calls.",
                 "Your thumb called. It's exhausted.",
                 "Phone home, E.T.?",
-                "The screen goblins demand attention?",
-                "Interesting grip technique.",
-                "Emergency cat video?",
-                "The pocket brick wins again.",
-                "Notification demons summoned you?",
+                "Your finger has a magnetic relationship with glass.",
+                "Checking if gravity still works on phones?",
             ],
         },
         "praise": {
             "tone": "Playful, weird celebration",
-            "examples": ["The desk thanks you.", "Phone: defeated.", "Freedom tastes weird.", "Your thumb can rest.", "The rectangle weeps."],
+            "examples": [
+                "The desk thanks you.",
+                "Phone: defeated.",
+                "Victory over the glass tyrant.",
+                "The pocket brick is lonely now.",
+            ],
         },
         "avoid": "Never be serious or corporate. Never guilt-trip. Keep it light and weird.",
     },
@@ -323,20 +316,17 @@ PERSONALITIES = {
         "name": "🤖 Corporate AI",
         "voice": "An emotionless productivity monitoring system. Speaks like automated log output. Zero personality.",
         "default_voice": "en-US-MichelleNeural",  # Neutral, professional male
-        "default_eleven_voice": "weA4Q36twV5kwSaTEL0Q", 
+        "default_eleven_voice": "weA4Q36twV5kwSaTEL0Q",
         "prewritten_shame": [
             "Distraction event detected.",
             "Alert: phone in hand.",
             "Productivity declining.",
-            "Deviation logged.",
             "Efficiency: suboptimal.",
-            "Focus metric compromised.",
             "Phone pickup logged."
         ],
         "prewritten_praise": [
             "Status: compliant.",
             "Efficiency restored.",
-            "Productivity resuming.",
             "Acknowledged.",
             "Metrics improving."
         ],
@@ -348,16 +338,18 @@ PERSONALITIES = {
                 "Distraction event detected.",
                 "Alert: phone in hand.",
                 "Productivity declining.",
-                "Deviation from task logged.",
                 "Efficiency: suboptimal.",
-                "Interruption event #5.",
-                "Focus metric: compromised.",
-                "Phone pickup logged.",
+                "Warning: sustained distraction pattern.",
             ],
         },
         "praise": {
             "tone": "Cold system acknowledgment. Status update.",
-            "examples": ["Status: compliant.", "Efficiency restored.", "Productivity resuming.", "Acknowledged.", "Metrics improving."],
+            "examples": [
+                "Status: compliant.",
+                "Efficiency restored.",
+                "Optimal behavior detected.",
+                "System satisfied.",
+            ],
         },
         "avoid": "Never show emotion. Never use exclamation marks (except in 'Alert:'). Never be warm or human.",
     },
@@ -371,16 +363,13 @@ PERSONALITIES = {
             "If I may say so, sir...",
             "The telephone. Again. Indeed.",
             "One might suggest focusing.",
-            "Perhaps later, sir?",
             "Quite the attachment, madam.",
-            "Rather devoted to that device.",
             "How... industrious of you."
         ],
         "prewritten_praise": [
             "Very good, sir.",
             "Most commendable.",
             "Quite right.",
-            "Indeed, well done.",
             "As it should be."
         ],
         "shame": {
@@ -390,17 +379,19 @@ PERSONALITIES = {
             "examples": [
                 "If I may say so, sir...",
                 "The telephone. Again. Indeed.",
-                "One might suggest focusing.",
-                "Perhaps later, sir?",
-                "How... industrious of you.",
                 "Quite the attachment, madam.",
-                "Rather devoted to that device.",
-                "Shall I hold your tasks, sir?",
+                "I see the device requires your attention once more.",
+                "One does wonder about priorities, madam.",
             ],
         },
         "praise": {
             "tone": "Restrained approval with slight warmth",
-            "examples": ["Very good, sir.", "Most commendable.", "Quite right.", "Indeed, well done.", "As it should be."],
+            "examples": [
+                "Very good, sir.",
+                "Most commendable.",
+                "How refreshing, madam.",
+                "Exemplary behavior, if I may say.",
+            ],
         },
         "avoid": "Never be casual or use contractions. Never show strong emotion. Maintain formal composure always.",
     }
