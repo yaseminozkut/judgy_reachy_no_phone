@@ -78,12 +78,20 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             """Return list of available personalities from config."""
             personalities_list = []
             for key, data in PERSONALITIES.items():
+                # Handle both old (single voice) and new (voice list) format
+                eleven_voice_data = data.get("default_eleven_voices", data.get("default_eleven_voice", ""))
+                if isinstance(eleven_voice_data, list):
+                    # Show first voice in list as the default
+                    default_eleven = eleven_voice_data[0] if eleven_voice_data else ""
+                else:
+                    default_eleven = eleven_voice_data
+
                 personalities_list.append({
                     "id": key,
                     "name": data["name"],
                     "voice": data["voice"],
                     "default_voice": data.get("default_voice", ""),
-                    "default_eleven_voice": data.get("default_eleven_voice", "")
+                    "default_eleven_voice": default_eleven
                 })
             return {"personalities": personalities_list}
 
@@ -581,6 +589,40 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 disappointed_shake(reachy_mini)
 
             return {"success": True}
+
+        # API endpoint: Update personality while monitoring
+        @self.settings_app.post("/api/update-personality")
+        def update_personality(req: ToggleRequest):
+            """Update personality, voice, and API keys while monitoring is running."""
+            # Update LLM with new personality
+            if req.groq_key:
+                self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
+                logger.info(f"Updated LLM: personality={req.personality}, groq_key={'SET' if req.groq_key else 'NONE'}")
+            else:
+                self.llm = LLMResponder(api_key="", personality=req.personality)
+                logger.info(f"Updated LLM: personality={req.personality}, using prewritten lines")
+
+            # Update TTS with new personality and voices
+            if req.eleven_key:
+                self.tts = TextToSpeech(
+                    elevenlabs_key=req.eleven_key,
+                    voice=req.edge_voice,
+                    eleven_voice_id=req.eleven_voice,
+                    personality=req.personality
+                )
+                logger.info(f"Updated TTS: personality={req.personality}, ElevenLabs enabled")
+            else:
+                self.tts = TextToSpeech(
+                    voice=req.edge_voice,
+                    personality=req.personality
+                )
+                logger.info(f"Updated TTS: personality={req.personality}, Edge TTS only")
+
+            # Update other settings
+            self.config.COOLDOWN_SECONDS = req.cooldown
+            self.praise_enabled = req.praise
+
+            return {"success": True, "message": f"Updated to {req.personality}"}
 
         # Keep thread alive
         while not stop_event.is_set():

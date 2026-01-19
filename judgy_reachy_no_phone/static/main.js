@@ -33,7 +33,7 @@ async function loadPersonalities() {
             `;
 
             // Add click handler for card selection
-            card.addEventListener('click', (e) => {
+            card.addEventListener('click', async (e) => {
                 // Don't select if clicking settings button
                 if (e.target.classList.contains('personality-settings-btn')) {
                     return;
@@ -41,6 +41,13 @@ async function loadPersonalities() {
                 document.querySelectorAll('.personality-card').forEach(c => c.classList.remove('active'));
                 card.classList.add('active');
                 selectedPersonality = personality.id;
+
+                // If monitoring is running, update personality in real-time
+                const statusResponse = await fetch('/api/status');
+                const statusData = await statusResponse.json();
+                if (statusData.is_monitoring) {
+                    await updatePersonalityWhileRunning();
+                }
             });
 
             // Add click handler for settings button
@@ -382,6 +389,35 @@ async function testShame() {
         await updateDisplay();
     } catch (e) {
         console.error('Test failed:', e);
+    }
+}
+
+// Update personality while monitoring is running
+async function updatePersonalityWhileRunning() {
+    const groqKey = document.getElementById('groq-key').value;
+    const elevenKey = document.getElementById('eleven-key').value;
+    const cooldown = document.getElementById('cooldown').value;
+    const praise = document.getElementById('praise-toggle').checked;
+    const voiceOverride = voiceOverrides[selectedPersonality] || {};
+
+    try {
+        await fetch('/api/update-personality', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                groq_key: groqKey,
+                eleven_key: elevenKey,
+                eleven_voice: voiceOverride.eleven || '',
+                edge_voice: voiceOverride.edge || '',
+                cooldown: parseInt(cooldown),
+                praise: praise,
+                reset: false,
+                personality: selectedPersonality
+            })
+        });
+        console.log('Personality updated to:', selectedPersonality);
+    } catch (e) {
+        console.error('Failed to update personality:', e);
     }
 }
 
