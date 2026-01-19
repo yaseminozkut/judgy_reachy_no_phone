@@ -107,8 +107,8 @@ PERSONALITIES = {
     "angry_boss": {
         "name": "😠 Angry Boss",
         "voice": "A furious manager who's reached their absolute limit. Explosive, aggressive, zero patience left.",
-        "default_voice": "en-US-GuyNeural",  # Deep, stern male
-        "default_eleven_voice": "pNInz6obpgDQGcFmaJgB",  # Adam - deep male
+        "default_voice": "en-US-ChristopherNeural",  # Deep, stern male
+        "default_eleven_voice": "DGzg6RaUqxGRTHSBjfgF", 
         "prewritten_shame": [
             "Put it down!",
             "Unbelievable!",
@@ -151,8 +151,8 @@ PERSONALITIES = {
     "sarcastic": {
         "name": "🎭 Sarcastic",
         "voice": "Dripping with dry wit. Mock enthusiasm, feigned interest. Pretends to take their phone use seriously.",
-        "default_voice": "en-GB-RyanNeural",  # British male, dry wit
-        "default_eleven_voice": "onwK4e9ZLuTAKqWW03F9",  # Daniel - British
+        "default_voice": "en-US-AvaMultilingualNeural",  # Female, dry wit
+        "default_eleven_voice": "50lF5fQMqcxbDQOW6qOs",  
         "prewritten_shame": [
             "Oh, how vital.",
             "Riveting stuff, I'm sure.",
@@ -193,8 +193,8 @@ PERSONALITIES = {
     "disappointed_parent": {
         "name": "😔 Disappointed Parent",
         "voice": "A heartbroken parent. Not angry—just deeply let down. Maximum guilt. References their potential.",
-        "default_voice": "en-US-JennyNeural",  # Soft female, empathetic
-        "default_eleven_voice": "EXAVITQu4vr4xnSDxMaL",  # Sarah - warm female
+        "default_voice": "en-US-en-US-AvaNeural",  # Soft female, empathetic
+        "default_eleven_voice": "roYauZ4bOLAKvVZTPLre", 
         "prewritten_shame": [
             "I'm so disappointed...",
             "We talked about this.",
@@ -236,8 +236,8 @@ PERSONALITIES = {
     "motivational_coach": {
         "name": "💪 Motivational Coach",
         "voice": "An intense drill-sergeant coach who believes in you but won't tolerate weakness. High energy, sports metaphors.",
-        "default_voice": "en-US-EricNeural",  # Energetic male
-        "default_eleven_voice": "TxGEqnHWrfWFTfGW9XjX",  # Josh - energetic
+        "default_voice": "en-US-GuyNeural",  # Energetic male
+        "default_eleven_voice": "84Fal4DSXWfp7nJ8emqQ", 
         "prewritten_shame": [
             "Where's your discipline?!",
             "Champions don't quit!",
@@ -280,7 +280,7 @@ PERSONALITIES = {
         "name": "🤡 Absurdist",
         "voice": "Surreal, unexpected, playful. Personifies objects. Makes weird observations. Non sequiturs welcome.",
         "default_voice": "en-US-AriaNeural",  # Playful, expressive female
-        "default_eleven_voice": "pFZP5JQG7iQjIQuC4Bku",  # Lily - playful
+        "default_eleven_voice": "G0yjIg3xY8gEJZkHpjVm", 
         "prewritten_shame": [
             "The forbidden rectangle calls.",
             "Your thumb called. It's exhausted.",
@@ -322,8 +322,8 @@ PERSONALITIES = {
     "corporate_ai": {
         "name": "🤖 Corporate AI",
         "voice": "An emotionless productivity monitoring system. Speaks like automated log output. Zero personality.",
-        "default_voice": "en-US-BrianNeural",  # Neutral, professional male
-        "default_eleven_voice": "nPczCjzI2devNBz1zQrb",  # Brian - professional
+        "default_voice": "en-US-MichelleNeural",  # Neutral, professional male
+        "default_eleven_voice": "weA4Q36twV5kwSaTEL0Q", 
         "prewritten_shame": [
             "Distraction event detected.",
             "Alert: phone in hand.",
@@ -365,8 +365,8 @@ PERSONALITIES = {
     "british_butler": {
         "name": "🎩 British Butler",
         "voice": "An impeccably polite but quietly judgmental butler. Passive-aggressive courtesy. Disappointment hidden behind manners.",
-        "default_voice": "en-GB-LibbyNeural",  # Polite British female
-        "default_eleven_voice": "onwK4e9ZLuTAKqWW03F9",  # Daniel - British accent
+        "default_voice": "en-GB-RyanNeural",  # Polite British male
+        "default_eleven_voice": "lUTamkMw7gOzZbFIwmq4",  # James - Professional British Male
         "prewritten_shame": [
             "If I may say so, sir...",
             "The telephone. Again. Indeed.",
