@@ -2,7 +2,7 @@
 
 import logging
 
-from .config import get_prewritten_line, get_praise_line, PERSONALITIES, get_random_personality
+from .config import PERSONALITIES, get_random_personality
 
 logger = logging.getLogger(__name__)
 
@@ -160,12 +160,7 @@ RULES:
 
         personality_data = PERSONALITIES.get(actual_personality, PERSONALITIES["angry_boss"])
         prewritten = personality_data.get("prewritten_shame", [])
-
-        if prewritten:
-            return random.choice(prewritten)
-
-        # Ultimate fallback to generic lines
-        return get_prewritten_line(0)
+        return random.choice(prewritten)
 
     def _get_prewritten_praise(self) -> str:
         """Get personality-specific pre-written praise line."""
@@ -179,12 +174,7 @@ RULES:
 
         personality_data = PERSONALITIES.get(actual_personality, PERSONALITIES["angry_boss"])
         prewritten = personality_data.get("prewritten_praise", [])
-
-        if prewritten:
-            return random.choice(prewritten)
-
-        # Ultimate fallback to generic lines
-        return get_praise_line()
+        return random.choice(prewritten)
 
 
 class TextToSpeech:
