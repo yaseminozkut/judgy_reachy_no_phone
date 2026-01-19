@@ -1,5 +1,5 @@
 // State
-let selectedPersonality = 'angry_boss';
+let selectedPersonality = 'pure_reachy';
 let currentVoicePersonality = null;
 let voiceOverrides = JSON.parse(localStorage.getItem('voiceOverrides') || '{}');
 
@@ -19,7 +19,7 @@ async function loadPersonalities() {
             const name = nameMatch ? nameMatch[2] : personality.name;
 
             const card = document.createElement('div');
-            card.className = 'personality-card' + (personality.id === 'angry_boss' ? ' active' : '');
+            card.className = 'personality-card' + (personality.id === 'pure_reachy' ? ' active' : '');
             card.dataset.personality = personality.id;
 
             card.innerHTML = `

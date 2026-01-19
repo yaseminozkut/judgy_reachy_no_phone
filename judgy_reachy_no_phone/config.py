@@ -24,6 +24,47 @@ class Config:
 
 # Personality definitions for LLM
 PERSONALITIES = {
+    "pure_reachy": {
+        "name": "🤖 Pure Reachy",
+        "voice": "Just robot sounds and animations. No speech, pure Reachy emotions.",
+        "default_voice": "en-US-AnaNeural",  # Not used
+        "default_eleven_voices": [],  # No TTS used
+        "use_builtin_sounds": True,  # Flag to use Reachy's built-in sounds
+        "prewritten_shame": [],  # No TTS - uses emotions
+        "prewritten_praise": [],  # No TTS - uses emotions
+        # Reachy emotion names to randomly pick from (from pollen-robotics/reachy-mini-emotions-library)
+        "shame_emotions": [
+            "disgusted1",
+            "resigned1",
+            "displeased1",
+            "displeased2",
+            "rage1",
+            "no1",
+            "reprimand1",
+            "reprimand3",
+            "dying1",
+            "surprised1",
+            "surprised2",
+        ],
+        "praise_emotions": [
+            "welcoming2",
+            "inquiring1",
+            "inquiring2",
+            "proud1",
+            "proud3",
+            "success1",
+            "success2",
+            "enthusiastic1",
+            "enthusiastic2",
+            "grateful1",
+            "yes1",
+            "cheerful1",
+        ],
+        "shame": None,  # No LLM needed
+        "praise": None,  # No LLM needed
+        "avoid": None,
+    },
+
     "angry_boss": {
         "name": "😠 Angry Boss",
         "voice": "A furious manager who's reached their absolute limit. Explosive, aggressive, zero patience left.",
@@ -346,6 +387,6 @@ PERSONALITIES = {
 }
 
 def get_random_personality() -> str:
-    """Get a random personality excluding mixtape itself."""
-    personalities = [p for p in PERSONALITIES.keys() if p != "mixtape"]
+    """Get a random personality excluding mixtape and pure_reachy."""
+    personalities = [p for p in PERSONALITIES.keys() if p not in ("mixtape", "pure_reachy")]
     return random.choice(personalities)
