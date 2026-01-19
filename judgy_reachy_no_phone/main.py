@@ -43,11 +43,11 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
         # Components
         self.detector = PhoneDetector(confidence=self.config.DETECTION_CONFIDENCE)
-        self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY, personality="mixtape")
+        self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY, personality="angry_boss")
         # Don't pass config voice defaults - let personalities use their own defaults
         self.tts = TextToSpeech(
             elevenlabs_key=self.config.ELEVENLABS_API_KEY,
-            personality="mixtape"
+            personality="angry_boss"
         )
 
         # State
@@ -305,7 +305,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             cooldown: int = 30
             praise: bool = True
             reset: bool = False  # If True, reset all stats (Start Fresh)
-            personality: str = "mixtape"  # Robot personality
+            personality: str = "angry_boss"  # Robot personality
 
         # API endpoint: Get video frame
         @self.settings_app.get("/api/video-frame")
