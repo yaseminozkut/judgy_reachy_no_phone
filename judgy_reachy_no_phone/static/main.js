@@ -3,56 +3,6 @@ let selectedPersonality = 'mixtape';
 let currentVoicePersonality = null;
 let voiceOverrides = JSON.parse(localStorage.getItem('voiceOverrides') || '{}');
 
-// Enable personality selection
-function enablePersonalities() {
-    const cards = document.querySelectorAll('.personality-card');
-    cards.forEach(card => {
-        card.classList.remove('disabled');
-        card.style.pointerEvents = 'auto';
-        card.style.opacity = '1';
-    });
-}
-
-// Disable personality selection
-function disablePersonalities() {
-    const cards = document.querySelectorAll('.personality-card');
-    cards.forEach(card => {
-        card.classList.add('disabled');
-        card.style.pointerEvents = 'none';
-        card.style.opacity = '0.5';
-    });
-}
-
-// Enable personality selection and voice editing
-function enablePersonalities() {
-    const cards = document.querySelectorAll('.personality-card');
-    cards.forEach(card => {
-        card.classList.remove('disabled');
-        card.style.pointerEvents = 'auto';
-        card.style.opacity = '1';
-    });
-
-    const settingsBtns = document.querySelectorAll('.personality-settings-btn');
-    settingsBtns.forEach(btn => {
-        btn.style.display = 'flex';
-    });
-}
-
-// Disable personality selection and voice editing
-function disablePersonalities() {
-    const cards = document.querySelectorAll('.personality-card');
-    cards.forEach(card => {
-        card.classList.add('disabled');
-        card.style.pointerEvents = 'none';
-        card.style.opacity = '0.5';
-    });
-
-    const settingsBtns = document.querySelectorAll('.personality-settings-btn');
-    settingsBtns.forEach(btn => {
-        btn.style.display = 'none';
-    });
-}
-
 // Load personalities from config dynamically
 async function loadPersonalities() {
     try {
@@ -115,11 +65,11 @@ async function updateUIForAPIKeys() {
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
 
-    // If no Groq key, disable personalities
+    // If no Groq key, show notice but keep personalities enabled (they use pre-written lines)
     if (!groqKey) {
-        document.getElementById('mode-text').textContent = 'YOLO | Pre-written lines → Edge TTS';
+        document.getElementById('mode-text').textContent = 'YOLO | Pre-written personality lines → Edge TTS';
         document.getElementById('api-notice').classList.remove('hidden');
-        disablePersonalities();
+        // Keep personalities enabled - they still have different voices and pre-written lines
         return;
     }
 
@@ -148,14 +98,12 @@ async function updateUIForAPIKeys() {
         // Update tech badge
         document.getElementById('mode-text').textContent = data.mode;
 
-        // Show/hide API notice and enable/disable personalities
+        // Show/hide API notice (personalities stay enabled)
         const apiNotice = document.getElementById('api-notice');
         if (data.groq_valid) {
             apiNotice.classList.add('hidden');
-            enablePersonalities();
         } else {
             apiNotice.classList.remove('hidden');
-            disablePersonalities();
         }
 
         // Show validation feedback with detailed errors
@@ -466,12 +414,6 @@ async function initialize() {
     updateDisplay();
     updateVideo();
     updateUIForAPIKeys();
-
-    // Start with personalities disabled (no Groq key on initial load)
-    disablePersonalities();
-
-    // Start with personalities disabled (no API key on initial load)
-    disablePersonalities();
 
     // Auto-update every 100ms for smooth video
     setInterval(() => {

@@ -44,10 +44,9 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         # Components
         self.detector = PhoneDetector(confidence=self.config.DETECTION_CONFIDENCE)
         self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY, personality="mixtape")
+        # Don't pass config voice defaults - let personalities use their own defaults
         self.tts = TextToSpeech(
             elevenlabs_key=self.config.ELEVENLABS_API_KEY,
-            voice=self.config.EDGE_TTS_VOICE,
-            eleven_voice_id=self.config.ELEVENLABS_VOICE_ID,
             personality="mixtape"
         )
 
@@ -379,16 +378,21 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 else:
                     logger.info("No Groq API key provided, using pre-written lines")
 
-                # Initialize TTS with custom voices if provided
-                eleven_voice = req.eleven_voice if req.eleven_voice else self.config.ELEVENLABS_VOICE_ID
-                edge_voice = req.edge_voice if req.edge_voice else self.config.EDGE_TTS_VOICE
-
+                # Initialize TTS - pass custom voices only if explicitly set (empty string means use personality default)
                 if req.eleven_key:
-                    logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}... voice: {eleven_voice}")
-                    self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice, personality=req.personality)
+                    logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}...")
+                    self.tts = TextToSpeech(
+                        elevenlabs_key=req.eleven_key,
+                        voice=req.edge_voice,  # Pass empty string if not set, let personality defaults handle it
+                        eleven_voice_id=req.eleven_voice,
+                        personality=req.personality
+                    )
                 else:
-                    logger.info(f"No ElevenLabs key provided, using Edge TTS with voice: {edge_voice}")
-                    self.tts = TextToSpeech(voice=edge_voice, personality=req.personality)
+                    logger.info(f"No ElevenLabs key provided, using Edge TTS")
+                    self.tts = TextToSpeech(
+                        voice=req.edge_voice,  # Pass empty string if not set, let personality defaults handle it
+                        personality=req.personality
+                    )
 
                 self.config.COOLDOWN_SECONDS = req.cooldown
                 self.praise_enabled = req.praise
@@ -534,13 +538,19 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             if req.groq_key:
                 self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
 
-            eleven_voice = req.eleven_voice if req.eleven_voice else self.config.ELEVENLABS_VOICE_ID
-            edge_voice = req.edge_voice if req.edge_voice else self.config.EDGE_TTS_VOICE
-
+            # Pass voice overrides only if explicitly set (empty string means use personality default)
             if req.eleven_key:
-                self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice, personality=req.personality)
+                self.tts = TextToSpeech(
+                    elevenlabs_key=req.eleven_key,
+                    voice=req.edge_voice,
+                    eleven_voice_id=req.eleven_voice,
+                    personality=req.personality
+                )
             else:
-                self.tts = TextToSpeech(voice=edge_voice, personality=req.personality)
+                self.tts = TextToSpeech(
+                    voice=req.edge_voice,
+                    personality=req.personality
+                )
 
             # Run test without starting monitoring
             self.detector.phone_count += 1

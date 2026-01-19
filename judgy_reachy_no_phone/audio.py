@@ -28,9 +28,9 @@ class LLMResponder:
     def get_response(self, phone_count: int, context: str = "") -> str:
         """Get a snarky response about phone usage."""
 
-        # Fallback to pre-written if no API
+        # Fallback to personality-specific pre-written if no API
         if not self.client:
-            return get_prewritten_line(phone_count)
+            return self._get_prewritten_shame()
 
         try:
             # Get personality - if mixtape, randomly pick one
@@ -96,13 +96,13 @@ RULES:
             return response.choices[0].message.content.strip()
         except Exception as e:
             logger.warning(f"Groq API error: {e}, using fallback")
-            return get_prewritten_line(phone_count)
+            return self._get_prewritten_shame()
 
     def get_praise(self) -> str:
         """Get praise for putting phone down."""
 
         if not self.client:
-            return get_praise_line()
+            return self._get_prewritten_praise()
 
         try:
             # Get personality - if mixtape, randomly pick one
@@ -147,7 +147,45 @@ RULES:
             )
             return response.choices[0].message.content.strip()
         except Exception:
-            return get_praise_line()
+            return self._get_prewritten_praise()
+
+    def _get_prewritten_shame(self) -> str:
+        """Get personality-specific pre-written shame line."""
+        import random
+
+        # If mixtape, randomly pick a personality
+        if self.personality == "mixtape":
+            actual_personality = get_random_personality()
+        else:
+            actual_personality = self.personality
+
+        personality_data = PERSONALITIES.get(actual_personality, PERSONALITIES["angry_boss"])
+        prewritten = personality_data.get("prewritten_shame", [])
+
+        if prewritten:
+            return random.choice(prewritten)
+
+        # Ultimate fallback to generic lines
+        return get_prewritten_line(0)
+
+    def _get_prewritten_praise(self) -> str:
+        """Get personality-specific pre-written praise line."""
+        import random
+
+        # If mixtape, randomly pick a personality
+        if self.personality == "mixtape":
+            actual_personality = get_random_personality()
+        else:
+            actual_personality = self.personality
+
+        personality_data = PERSONALITIES.get(actual_personality, PERSONALITIES["angry_boss"])
+        prewritten = personality_data.get("prewritten_praise", [])
+
+        if prewritten:
+            return random.choice(prewritten)
+
+        # Ultimate fallback to generic lines
+        return get_praise_line()
 
 
 class TextToSpeech:

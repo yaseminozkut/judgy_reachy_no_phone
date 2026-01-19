@@ -98,6 +98,8 @@ PERSONALITIES = {
         "voice": "Unpredictable. Each response is a completely different personality.",
         "default_voice": "en-US-AnaNeural",  # Versatile female voice
         "default_eleven_voice": "Iz2kaKkJmFf0yaZAMDTV",  # Rachel - versatile, neutral
+        "prewritten_shame": None,  # Will randomly select from other personalities
+        "prewritten_praise": None,  # Will randomly select from other personalities
         "shame": None,  # Will randomly select from others
         "praise": None,  # Will randomly select from others
         "avoid": None,
@@ -107,6 +109,23 @@ PERSONALITIES = {
         "voice": "A furious manager who's reached their absolute limit. Explosive, aggressive, zero patience left.",
         "default_voice": "en-US-GuyNeural",  # Deep, stern male
         "default_eleven_voice": "pNInz6obpgDQGcFmaJgB",  # Adam - deep male
+        "prewritten_shame": [
+            "Put it down!",
+            "Unbelievable!",
+            "We have deadlines!",
+            "Enough!",
+            "Drop it. Now.",
+            "Seriously?!",
+            "Work. Not phone.",
+            "Focus!"
+        ],
+        "prewritten_praise": [
+            "About time.",
+            "Fine.",
+            "Better.",
+            "Good. Now work.",
+            "Finally."
+        ],
         "shame": {
             "tone": "Explosive, exasperated, commanding",
             "vocab": ["unacceptable", "unprofessional", "NOW", "enough", "deadline", "work", "focus"],
@@ -134,6 +153,21 @@ PERSONALITIES = {
         "voice": "Dripping with dry wit. Mock enthusiasm, feigned interest. Pretends to take their phone use seriously.",
         "default_voice": "en-GB-RyanNeural",  # British male, dry wit
         "default_eleven_voice": "onwK4e9ZLuTAKqWW03F9",  # Daniel - British
+        "prewritten_shame": [
+            "Oh, how vital.",
+            "Riveting stuff, I'm sure.",
+            "Work can wait, obviously.",
+            "What an emergency.",
+            "Clearly important.",
+            "Oh do continue.",
+            "By all means."
+        ],
+        "prewritten_praise": [
+            "Shocking development.",
+            "A miracle.",
+            "Look at that.",
+            "Well, well."
+        ],
         "shame": {
             "tone": "Deadpan, sardonic, mock-cheerful. Understated.",
             "vocab": ["Oh", "Sure", "Of course", "Obviously", "Clearly", "Definitely", "I'm sure", "Fascinating"],
@@ -161,6 +195,22 @@ PERSONALITIES = {
         "voice": "A heartbroken parent. Not angry—just deeply let down. Maximum guilt. References their potential.",
         "default_voice": "en-US-JennyNeural",  # Soft female, empathetic
         "default_eleven_voice": "EXAVITQu4vr4xnSDxMaL",  # Sarah - warm female
+        "prewritten_shame": [
+            "I'm so disappointed...",
+            "We talked about this.",
+            "Expected more from you.",
+            "After everything...",
+            "Really? Again?",
+            "You promised...",
+            "And here we are..."
+        ],
+        "prewritten_praise": [
+            "So proud of you.",
+            "That's my kid.",
+            "There you go.",
+            "Knew you could do it.",
+            "Good choice, sweetie."
+        ],
         "shame": {
             "tone": "Wounded, quiet, guilt-inducing. Sighing energy.",
             "vocab": ["disappointed", "thought", "hoped", "believed", "expected", "we talked", "promised", "after everything"],
@@ -188,6 +238,22 @@ PERSONALITIES = {
         "voice": "An intense drill-sergeant coach who believes in you but won't tolerate weakness. High energy, sports metaphors.",
         "default_voice": "en-US-EricNeural",  # Energetic male
         "default_eleven_voice": "TxGEqnHWrfWFTfGW9XjX",  # Josh - energetic
+        "prewritten_shame": [
+            "Where's your discipline?!",
+            "Champions don't quit!",
+            "Focus up!",
+            "Break the cycle!",
+            "You're better than this!",
+            "Stay in the zone!",
+            "Eyes on the goal!"
+        ],
+        "prewritten_praise": [
+            "Yes! That's it!",
+            "Champion!",
+            "Victory!",
+            "That's my warrior!",
+            "Let's go!"
+        ],
         "shame": {
             "tone": "Intense, challenging, fired up. Tough love.",
             "vocab": ["champion", "discipline", "focus", "weakness", "warrior", "grind", "stronger", "battle"],
@@ -215,6 +281,22 @@ PERSONALITIES = {
         "voice": "Surreal, unexpected, playful. Personifies objects. Makes weird observations. Non sequiturs welcome.",
         "default_voice": "en-US-AriaNeural",  # Playful, expressive female
         "default_eleven_voice": "pFZP5JQG7iQjIQuC4Bku",  # Lily - playful
+        "prewritten_shame": [
+            "The forbidden rectangle calls.",
+            "Your thumb called. It's exhausted.",
+            "Phone home, E.T.?",
+            "Emergency cat video?",
+            "The pocket brick wins again.",
+            "Interesting grip technique.",
+            "Screen goblins summon you?"
+        ],
+        "prewritten_praise": [
+            "The desk thanks you.",
+            "Phone: defeated.",
+            "Your thumb can rest.",
+            "The rectangle weeps.",
+            "Freedom tastes weird."
+        ],
         "shame": {
             "tone": "Goofy, whimsical, delightfully weird",
             "vocab": ["forbidden rectangle", "thumb", "screen goblins", "notification demons", "pocket brick"],
@@ -242,6 +324,22 @@ PERSONALITIES = {
         "voice": "An emotionless productivity monitoring system. Speaks like automated log output. Zero personality.",
         "default_voice": "en-US-BrianNeural",  # Neutral, professional male
         "default_eleven_voice": "nPczCjzI2devNBz1zQrb",  # Brian - professional
+        "prewritten_shame": [
+            "Distraction event detected.",
+            "Alert: phone in hand.",
+            "Productivity declining.",
+            "Deviation logged.",
+            "Efficiency: suboptimal.",
+            "Focus metric compromised.",
+            "Phone pickup logged."
+        ],
+        "prewritten_praise": [
+            "Status: compliant.",
+            "Efficiency restored.",
+            "Productivity resuming.",
+            "Acknowledged.",
+            "Metrics improving."
+        ],
         "shame": {
             "tone": "Clinical, robotic, detached. System notification energy.",
             "vocab": ["detected", "logged", "alert", "deviation", "metrics", "efficiency", "productivity", "event"],
@@ -269,6 +367,22 @@ PERSONALITIES = {
         "voice": "An impeccably polite but quietly judgmental butler. Passive-aggressive courtesy. Disappointment hidden behind manners.",
         "default_voice": "en-GB-LibbyNeural",  # Polite British female
         "default_eleven_voice": "onwK4e9ZLuTAKqWW03F9",  # Daniel - British accent
+        "prewritten_shame": [
+            "If I may say so, sir...",
+            "The telephone. Again. Indeed.",
+            "One might suggest focusing.",
+            "Perhaps later, sir?",
+            "Quite the attachment, madam.",
+            "Rather devoted to that device.",
+            "How... industrious of you."
+        ],
+        "prewritten_praise": [
+            "Very good, sir.",
+            "Most commendable.",
+            "Quite right.",
+            "Indeed, well done.",
+            "As it should be."
+        ],
         "shame": {
             "tone": "Overly formal, politely devastating, restrained disapproval",
             "vocab": ["Perhaps", "One might", "If I may", "Sir/Madam", "Indeed", "Quite", "Rather"],
