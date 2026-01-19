@@ -402,6 +402,50 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
                 return {"button_text": "🛑 Stop Monitoring"}
 
+        # API endpoint: Validate API keys
+        @self.settings_app.post("/api/validate-keys")
+        def validate_keys(req: ToggleRequest):
+            """Test API keys without starting monitoring."""
+            result = {
+                "groq_valid": False,
+                "eleven_valid": False,
+                "mode": "Pre-written lines → Edge TTS"
+            }
+
+            # Test Groq
+            if req.groq_key:
+                try:
+                    from groq import Groq
+                    test_client = Groq(api_key=req.groq_key)
+                    # Quick test call
+                    test_client.chat.completions.create(
+                        model="llama-3.1-8b-instant",
+                        max_tokens=5,
+                        messages=[{"role": "user", "content": "test"}]
+                    )
+                    result["groq_valid"] = True
+                    logger.info("Groq API key validated successfully")
+                except Exception as e:
+                    logger.warning(f"Groq API key validation failed: {e}")
+
+            # Test ElevenLabs
+            if req.eleven_key:
+                try:
+                    from elevenlabs import ElevenLabs
+                    test_eleven = ElevenLabs(api_key=req.eleven_key)
+                    # If initialization doesn't throw, assume valid
+                    result["eleven_valid"] = True
+                    logger.info("ElevenLabs API key validated successfully")
+                except Exception as e:
+                    logger.warning(f"ElevenLabs API key validation failed: {e}")
+
+            # Build mode string
+            llm_text = "LLM + TTS" if result["groq_valid"] else "Pre-written lines"
+            tts_text = "ElevenLabs" if result["eleven_valid"] else "Edge TTS"
+            result["mode"] = f"YOLO | {llm_text} → {tts_text}"
+
+            return result
+
         # API endpoint: Reset all stats
         @self.settings_app.post("/api/reset")
         def reset_stats():

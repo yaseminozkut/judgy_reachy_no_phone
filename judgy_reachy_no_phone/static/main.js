@@ -1,6 +1,61 @@
 // State
 let selectedPersonality = 'mixtape';
 
+// Update UI based on API keys (without starting monitoring)
+async function updateUIForAPIKeys() {
+    const groqKey = document.getElementById('groq-key').value;
+    const elevenKey = document.getElementById('eleven-key').value;
+    const cooldown = document.getElementById('cooldown').value;
+    const praise = document.getElementById('praise-toggle').checked;
+
+    // If no keys, just update UI
+    if (!groqKey && !elevenKey) {
+        document.getElementById('mode-text').textContent = 'YOLO | Pre-written lines → Edge TTS';
+        document.getElementById('api-notice').classList.remove('hidden');
+        return;
+    }
+
+    try {
+        // Validate keys with backend
+        const response = await fetch('/api/validate-keys', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                groq_key: groqKey,
+                eleven_key: elevenKey,
+                cooldown: parseInt(cooldown),
+                praise: praise,
+                reset: false,
+                personality: selectedPersonality
+            })
+        });
+
+        const data = await response.json();
+
+        // Update tech badge
+        document.getElementById('mode-text').textContent = data.mode;
+
+        // Show/hide API notice
+        const apiNotice = document.getElementById('api-notice');
+        if (data.groq_valid) {
+            apiNotice.classList.add('hidden');
+        } else {
+            apiNotice.classList.remove('hidden');
+        }
+
+        // Show validation feedback
+        if (groqKey && !data.groq_valid) {
+            alert('Invalid Groq API key. Please check your key and try again.');
+        }
+        if (elevenKey && !data.eleven_valid) {
+            alert('Invalid ElevenLabs API key. Please check your key and try again.');
+        }
+
+    } catch (e) {
+        console.error('Key validation failed:', e);
+    }
+}
+
 // Personality card selection
 document.querySelectorAll('.personality-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -17,6 +72,7 @@ document.querySelectorAll('.personality-card').forEach(card => {
 const settingsModal = document.getElementById('settings-modal');
 const settingsBtn = document.getElementById('settings-btn');
 const closeSettings = document.getElementById('close-settings');
+const doneSettings = document.getElementById('done-settings');
 
 settingsBtn.addEventListener('click', () => {
     settingsModal.classList.add('active');
@@ -24,6 +80,12 @@ settingsBtn.addEventListener('click', () => {
 
 closeSettings.addEventListener('click', () => {
     settingsModal.classList.remove('active');
+});
+
+doneSettings.addEventListener('click', () => {
+    settingsModal.classList.remove('active');
+    // Update UI immediately based on API keys
+    updateUIForAPIKeys();
 });
 
 // Close modal on backdrop click
@@ -82,12 +144,24 @@ async function updateDisplay() {
 
         // Update stats
         document.getElementById('phone-count').textContent = data.phone_count;
-        document.getElementById('total-shames').textContent = data.total_shames;
         document.getElementById('current-streak').textContent = data.current_streak;
         document.getElementById('longest-streak').textContent = data.longest_streak;
 
         // Update mode name
         document.getElementById('mode-name').textContent = selectedPersonality.charAt(0).toUpperCase() + selectedPersonality.slice(1).replace('_', ' ');
+
+        // Update tech info (only if monitoring, otherwise keep user's entered keys)
+        if (data.is_monitoring) {
+            document.getElementById('mode-text').textContent = data.mode;
+
+            // Show/hide API notice based on whether LLM is active
+            const apiNotice = document.getElementById('api-notice');
+            if (data.mode.includes('LLM + TTS')) {
+                apiNotice.classList.add('hidden');
+            } else {
+                apiNotice.classList.remove('hidden');
+            }
+        }
 
         // Update button
         const toggleBtn = document.getElementById('toggle-btn');
@@ -193,3 +267,4 @@ setInterval(() => {
 // Initial update
 updateDisplay();
 updateVideo();
+updateUIForAPIKeys();

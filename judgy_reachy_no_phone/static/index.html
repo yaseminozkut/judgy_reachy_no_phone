@@ -32,6 +32,7 @@
                     <span class="status-dot"></span>
                     <span id="status-text">Not Monitoring</span>
                 </div>
+                <div class="tech-badge" id="mode-text">Pre-written lines → Edge TTS</div>
                 <div class="mode-badge">
                     Mode: <span id="mode-name">Mixtape</span>
                 </div>
@@ -69,11 +70,7 @@
             <div class="stats-row">
                 <div class="stat-card red">
                     <div class="stat-value" id="phone-count">0</div>
-                    <div class="stat-label">PICKUPS TODAY</div>
-                </div>
-                <div class="stat-card green">
-                    <div class="stat-value" id="total-shames">0</div>
-                    <div class="stat-label">TOTAL SHAMES</div>
+                    <div class="stat-label">BUSTED BY REACHY</div>
                 </div>
                 <div class="stat-card blue">
                     <div class="stat-value" id="current-streak">0s</div>
@@ -96,6 +93,15 @@
             <div class="personality-panel">
                 <h2 class="panel-title">🤖 Robot Personality</h2>
                 <p class="panel-subtitle">Choose how the robot judges you</p>
+
+                <!-- API Key Notice -->
+                <div class="api-notice" id="api-notice">
+                    <div class="notice-icon">⚠️</div>
+                    <div class="notice-text">
+                        <strong>Groq API Key Required</strong><br>
+                        <span class="notice-small">Add key in settings to enable personalities</span>
+                    </div>
+                </div>
 
                 <div class="personality-list">
                     <div class="personality-card active" data-personality="mixtape">
@@ -191,6 +197,9 @@
                         Praise when phone is put down
                     </label>
                 </div>
+            </div>
+            <div class="settings-footer">
+                <button class="btn btn-done" id="done-settings">✓ Done</button>
             </div>
         </div>
     </div>
