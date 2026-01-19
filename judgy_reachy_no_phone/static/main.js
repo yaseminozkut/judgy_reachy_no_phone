@@ -1,6 +1,26 @@
 // State
 let selectedPersonality = 'mixtape';
 
+// Enable personality selection
+function enablePersonalities() {
+    const cards = document.querySelectorAll('.personality-card');
+    cards.forEach(card => {
+        card.classList.remove('disabled');
+        card.style.pointerEvents = 'auto';
+        card.style.opacity = '1';
+    });
+}
+
+// Disable personality selection
+function disablePersonalities() {
+    const cards = document.querySelectorAll('.personality-card');
+    cards.forEach(card => {
+        card.classList.add('disabled');
+        card.style.pointerEvents = 'none';
+        card.style.opacity = '0.5';
+    });
+}
+
 // Load personalities from config dynamically
 async function loadPersonalities() {
     try {
@@ -53,10 +73,11 @@ async function updateUIForAPIKeys() {
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
 
-    // If no keys, just update UI
+    // If no keys, just update UI and disable personalities
     if (!groqKey && !elevenKey) {
         document.getElementById('mode-text').textContent = 'YOLO | Pre-written lines → Edge TTS';
         document.getElementById('api-notice').classList.remove('hidden');
+        disablePersonalities();
         return;
     }
 
@@ -82,12 +103,14 @@ async function updateUIForAPIKeys() {
         // Update tech badge
         document.getElementById('mode-text').textContent = data.mode;
 
-        // Show/hide API notice
+        // Show/hide API notice and enable/disable personalities
         const apiNotice = document.getElementById('api-notice');
         if (data.groq_valid) {
             apiNotice.classList.add('hidden');
+            enablePersonalities();
         } else {
             apiNotice.classList.remove('hidden');
+            disablePersonalities();
         }
 
         // Show validation feedback with detailed errors
@@ -326,6 +349,9 @@ async function initialize() {
     updateDisplay();
     updateVideo();
     updateUIForAPIKeys();
+
+    // Start with personalities disabled (no API key on initial load)
+    disablePersonalities();
 
     // Auto-update every 100ms for smooth video
     setInterval(() => {

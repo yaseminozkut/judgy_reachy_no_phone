@@ -545,6 +545,17 @@ body {
     opacity: 1;
 }
 
+.personality-card.disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.personality-card.disabled:hover {
+    background: rgba(31, 41, 55, 0.4);
+    border-color: rgba(255, 255, 255, 0.05);
+    transform: none;
+}
+
 /* Settings Modal */
 .settings-modal {
     position: fixed;
