@@ -208,7 +208,6 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
     def _handle_phone_pickup(self, reachy: ReachyMini):
         """Handle phone pickup event."""
-        start_time = time.time()
         count = self.detector.phone_count
         self.total_shames += 1
 
@@ -222,29 +221,22 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         logger.info(f"Phone pickup #{count}!")
 
         # Get snarky response
-        llm_start = time.time()
         text = self.llm.get_response(count)
-        logger.info(f"Response: {text} (LLM took {time.time() - llm_start:.2f}s)")
+        logger.info(f"Response: {text}")
 
         # Generate and play audio
         try:
-            tts_start = time.time()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             audio_path = loop.run_until_complete(self.tts.synthesize(text))
             loop.close()
-            logger.info(f"TTS took {time.time() - tts_start:.2f}s")
 
             # Play audio
-            audio_start = time.time()
             reachy.media.play_sound(audio_path)
-            logger.info(f"Audio playback took {time.time() - audio_start:.2f}s")
 
             # Animate based on offense count
             animation = get_animation_for_count(count)
             animation(reachy)
-
-            logger.info(f"Total pickup handling: {time.time() - start_time:.2f}s")
 
         except Exception as e:
             logger.error(f"Shame response error: {e}")
@@ -254,31 +246,24 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
     def _handle_phone_putdown(self, reachy: ReachyMini):
         """Handle phone put down event."""
-        start_time = time.time()
         logger.info("Phone put down!")
 
         # Start new streak
         self.current_streak_start = time.time()
 
         # Get praise
-        llm_start = time.time()
         text = self.llm.get_praise()
-        logger.info(f"Praise: {text} (LLM took {time.time() - llm_start:.2f}s)")
+        logger.info(f"Praise: {text}")
 
         try:
-            tts_start = time.time()
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             audio_path = loop.run_until_complete(self.tts.synthesize(text))
             loop.close()
-            logger.info(f"TTS took {time.time() - tts_start:.2f}s")
 
-            audio_start = time.time()
             reachy.media.play_sound(audio_path)
-            logger.info(f"Audio playback took {time.time() - audio_start:.2f}s")
 
             approving_nod(reachy)
-            logger.info(f"Total putdown handling: {time.time() - start_time:.2f}s")
 
         except Exception as e:
             logger.debug(f"Praise error: {e}")
