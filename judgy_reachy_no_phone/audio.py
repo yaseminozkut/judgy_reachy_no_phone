@@ -50,7 +50,6 @@ class LLMResponder:
             personality_prompt = f"""{voice_desc}
 
 TONE: {shame_data['tone']}
-VOCAB: Use words like: {', '.join(shame_data['vocab'])}
 STRUCTURE: {shame_data['structure']}
 
 EXAMPLES:
@@ -73,7 +72,7 @@ AVOID: {avoid}"""
             response = self.client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 max_tokens=20,
-                temperature=1.2,  # Higher for more creativity
+                temperature=1.1,  # High creativity for varied, entertaining responses
                 messages=[
                     {
                         "role": "system",
@@ -125,7 +124,7 @@ EXAMPLES:
             response = self.client.chat.completions.create(
                 model="llama-3.1-8b-instant",
                 max_tokens=15,
-                temperature=1.1,  # Higher for variety
+                temperature=0.8,  # Faster, still varied
                 messages=[
                     {
                         "role": "system",
