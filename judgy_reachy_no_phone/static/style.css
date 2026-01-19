@@ -694,6 +694,14 @@ body {
     cursor: pointer;
 }
 
+.input-hint {
+    display: block;
+    margin-top: 6px;
+    font-size: 11px;
+    color: #6b7280;
+    font-style: italic;
+}
+
 @keyframes pulse {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.5; }

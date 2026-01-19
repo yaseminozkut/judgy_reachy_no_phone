@@ -276,6 +276,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         class ToggleRequest(BaseModel):
             groq_key: str = ""
             eleven_key: str = ""
+            eleven_voice: str = ""  # Custom ElevenLabs voice ID
+            edge_voice: str = ""  # Custom Edge TTS voice
             cooldown: int = 30
             praise: bool = True
             reset: bool = False  # If True, reset all stats (Start Fresh)
@@ -359,11 +361,17 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
                 else:
                     logger.info("No Groq API key provided, using pre-written lines")
+
+                # Initialize TTS with custom voices if provided
+                eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
+                edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
+
                 if req.eleven_key:
-                    logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}...")
-                    self.tts = TextToSpeech(elevenlabs_key=req.eleven_key)
+                    logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}... voice: {eleven_voice}")
+                    self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice)
                 else:
-                    logger.info("No ElevenLabs key provided, using Edge TTS")
+                    logger.info(f"No ElevenLabs key provided, using Edge TTS with voice: {edge_voice}")
+                    self.tts = TextToSpeech(voice=edge_voice)
 
                 self.config.COOLDOWN_SECONDS = req.cooldown
                 self.praise_enabled = req.praise
@@ -390,11 +398,14 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         # API endpoint: Validate API keys
         @self.settings_app.post("/api/validate-keys")
         def validate_keys(req: ToggleRequest):
-            """Test API keys without starting monitoring."""
+            """Test API keys and voice IDs without starting monitoring."""
             result = {
                 "groq_valid": False,
                 "eleven_valid": False,
-                "mode": "Pre-written lines → Edge TTS"
+                "eleven_voice_valid": False,
+                "edge_voice_valid": False,
+                "mode": "Pre-written lines → Edge TTS",
+                "errors": []
             }
 
             # Test Groq
@@ -412,17 +423,48 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     logger.info("Groq API key validated successfully")
                 except Exception as e:
                     logger.warning(f"Groq API key validation failed: {e}")
+                    result["errors"].append(f"Groq: {str(e)}")
 
             # Test ElevenLabs
             if req.eleven_key:
+                eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
                 try:
                     from elevenlabs import ElevenLabs
                     test_eleven = ElevenLabs(api_key=req.eleven_key)
-                    # If initialization doesn't throw, assume valid
-                    result["eleven_valid"] = True
-                    logger.info("ElevenLabs API key validated successfully")
+
+                    # Test voice ID with small synthesis
+                    try:
+                        audio_gen = test_eleven.text_to_speech.convert(
+                            text="test",
+                            voice_id=eleven_voice,
+                            model_id="eleven_multilingual_v2"
+                        )
+                        # Consume generator to trigger any errors
+                        for _ in audio_gen:
+                            break
+                        result["eleven_valid"] = True
+                        result["eleven_voice_valid"] = True
+                        logger.info(f"ElevenLabs validated with voice: {eleven_voice}")
+                    except Exception as voice_error:
+                        result["eleven_valid"] = True  # Key is valid
+                        result["eleven_voice_valid"] = False  # But voice is not
+                        logger.warning(f"ElevenLabs voice validation failed: {voice_error}")
+                        result["errors"].append(f"ElevenLabs voice '{eleven_voice}': Invalid or no access")
                 except Exception as e:
                     logger.warning(f"ElevenLabs API key validation failed: {e}")
+                    result["errors"].append(f"ElevenLabs key: {str(e)}")
+
+            # Test Edge TTS voice
+            edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
+            try:
+                import edge_tts
+                # Try to get voice info
+                asyncio.run(edge_tts.VoicesManager.create().find_voice(edge_voice))
+                result["edge_voice_valid"] = True
+                logger.info(f"Edge TTS voice validated: {edge_voice}")
+            except Exception as e:
+                logger.warning(f"Edge TTS voice validation failed: {e}")
+                result["errors"].append(f"Edge TTS voice '{edge_voice}': Not found")
 
             # Build mode string
             llm_text = "LLM + TTS" if result["groq_valid"] else "Pre-written lines"
@@ -449,11 +491,42 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
         # API endpoint: Test shame
         @self.settings_app.post("/api/test")
-        def test_shame():
-            if not self.is_monitoring:
-                self.is_monitoring = True
+        def test_shame(req: ToggleRequest):
+            # Apply settings from UI before testing (but don't start monitoring)
+            if req.groq_key:
+                self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
+
+            eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
+            edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
+
+            if req.eleven_key:
+                self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice)
+            else:
+                self.tts = TextToSpeech(voice=edge_voice)
+
+            # Run test without starting monitoring
             self.detector.phone_count += 1
-            self._handle_phone_pickup(reachy_mini)
+            self.total_shames += 1
+
+            # Get response
+            text = self.llm.get_response(self.detector.phone_count)
+            logger.info(f"Test response: {text}")
+
+            # Play audio and animate
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                audio_path = loop.run_until_complete(self.tts.synthesize(text))
+                loop.close()
+
+                reachy_mini.media.play_sound(audio_path)
+                animation = get_animation_for_count(self.detector.phone_count)
+                animation(reachy_mini)
+            except Exception as e:
+                logger.error(f"Test error: {e}")
+                play_sound_safe(reachy_mini, "confused1.wav")
+                disappointed_shake(reachy_mini)
+
             return {"success": True}
 
         # Keep thread alive

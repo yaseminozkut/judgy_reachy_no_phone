@@ -118,9 +118,10 @@ RULES:
 class TextToSpeech:
     """Convert text to speech using Edge TTS (free) or ElevenLabs."""
 
-    def __init__(self, elevenlabs_key: str = "", voice: str = "en-US-AnaNeural"):
+    def __init__(self, elevenlabs_key: str = "", voice: str = "en-US-AnaNeural", eleven_voice_id: str = "H10ItvDnkRN5ysrvzT9J"):
         self.elevenlabs_key = elevenlabs_key
         self.edge_voice = voice
+        self.eleven_voice_id = eleven_voice_id
         self.eleven_client = None
         self.chars_used = 0
         self.MONTHLY_LIMIT = 9000  # Leave buffer under 10k
@@ -129,7 +130,7 @@ class TextToSpeech:
             try:
                 from elevenlabs import ElevenLabs
                 self.eleven_client = ElevenLabs(api_key=elevenlabs_key)
-                logger.info("ElevenLabs TTS initialized")
+                logger.info(f"ElevenLabs TTS initialized with voice: {eleven_voice_id}")
             except ImportError:
                 logger.warning("elevenlabs package not installed, using Edge TTS")
             except Exception as e:
@@ -152,7 +153,7 @@ class TextToSpeech:
         """Use ElevenLabs for high-quality voice."""
         audio = self.eleven_client.text_to_speech.convert(
             text=text,
-            voice_id="Nggzl2QAXh3OijoXD116",  # cute voice H10ItvDnkRN5ysrvzT9J
+            voice_id=self.eleven_voice_id,  # Custom or default voice
             model_id="eleven_multilingual_v2",  # Good balance of emotion and speed
         )
 

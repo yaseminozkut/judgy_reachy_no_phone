@@ -5,6 +5,8 @@ let selectedPersonality = 'mixtape';
 async function updateUIForAPIKeys() {
     const groqKey = document.getElementById('groq-key').value;
     const elevenKey = document.getElementById('eleven-key').value;
+    const elevenVoice = document.getElementById('eleven-voice').value;
+    const edgeVoice = document.getElementById('edge-voice').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
 
@@ -23,6 +25,8 @@ async function updateUIForAPIKeys() {
             body: JSON.stringify({
                 groq_key: groqKey,
                 eleven_key: elevenKey,
+                eleven_voice: elevenVoice,
+                edge_voice: edgeVoice,
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
@@ -43,12 +47,9 @@ async function updateUIForAPIKeys() {
             apiNotice.classList.remove('hidden');
         }
 
-        // Show validation feedback
-        if (groqKey && !data.groq_valid) {
-            alert('Invalid Groq API key. Please check your key and try again.');
-        }
-        if (elevenKey && !data.eleven_valid) {
-            alert('Invalid ElevenLabs API key. Please check your key and try again.');
+        // Show validation feedback with detailed errors
+        if (data.errors && data.errors.length > 0) {
+            alert('Validation errors:\n\n' + data.errors.join('\n'));
         }
 
     } catch (e) {
@@ -199,6 +200,8 @@ async function updateDisplay() {
 async function toggleMonitoring() {
     const groqKey = document.getElementById('groq-key').value;
     const elevenKey = document.getElementById('eleven-key').value;
+    const elevenVoice = document.getElementById('eleven-voice').value;
+    const edgeVoice = document.getElementById('edge-voice').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
 
@@ -209,6 +212,8 @@ async function toggleMonitoring() {
             body: JSON.stringify({
                 groq_key: groqKey,
                 eleven_key: elevenKey,
+                eleven_voice: elevenVoice,
+                edge_voice: edgeVoice,
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
@@ -240,8 +245,28 @@ async function resetStats() {
 
 // Test shame response
 async function testShame() {
+    const groqKey = document.getElementById('groq-key').value;
+    const elevenKey = document.getElementById('eleven-key').value;
+    const elevenVoice = document.getElementById('eleven-voice').value;
+    const edgeVoice = document.getElementById('edge-voice').value;
+    const cooldown = document.getElementById('cooldown').value;
+    const praise = document.getElementById('praise-toggle').checked;
+
     try {
-        await fetch('/api/test', { method: 'POST' });
+        await fetch('/api/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                groq_key: groqKey,
+                eleven_key: elevenKey,
+                eleven_voice: elevenVoice,
+                edge_voice: edgeVoice,
+                cooldown: parseInt(cooldown),
+                praise: praise,
+                reset: false,
+                personality: selectedPersonality
+            })
+        });
         await updateDisplay();
     } catch (e) {
         console.error('Test failed:', e);
