@@ -1,6 +1,49 @@
 // State
 let selectedPersonality = 'mixtape';
 
+// Load personalities from config dynamically
+async function loadPersonalities() {
+    try {
+        const response = await fetch('/api/personalities');
+        const data = await response.json();
+
+        const personalityList = document.getElementById('personality-list');
+        personalityList.innerHTML = '';
+
+        data.personalities.forEach((personality, index) => {
+            // Extract emoji and name from "😠 Angry Boss" format
+            const nameMatch = personality.name.match(/^(\S+)\s+(.+)$/);
+            const emoji = nameMatch ? nameMatch[1] : '🤖';
+            const name = nameMatch ? nameMatch[2] : personality.name;
+
+            const card = document.createElement('div');
+            card.className = 'personality-card' + (personality.id === 'mixtape' ? ' active' : '');
+            card.dataset.personality = personality.id;
+
+            card.innerHTML = `
+                <div class="personality-emoji">${emoji}</div>
+                <div class="personality-info">
+                    <div class="personality-name">${name}</div>
+                    <div class="personality-desc">${personality.voice}</div>
+                </div>
+                <div class="personality-check">✓</div>
+            `;
+
+            // Add click handler
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.personality-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                selectedPersonality = personality.id;
+            });
+
+            personalityList.appendChild(card);
+        });
+
+    } catch (e) {
+        console.error('Failed to load personalities:', e);
+    }
+}
+
 // Update UI based on API keys (without starting monitoring)
 async function updateUIForAPIKeys() {
     const groqKey = document.getElementById('groq-key').value;
@@ -56,18 +99,6 @@ async function updateUIForAPIKeys() {
         console.error('Key validation failed:', e);
     }
 }
-
-// Personality card selection
-document.querySelectorAll('.personality-card').forEach(card => {
-    card.addEventListener('click', () => {
-        // Remove active from all
-        document.querySelectorAll('.personality-card').forEach(c => c.classList.remove('active'));
-        // Add active to clicked
-        card.classList.add('active');
-        // Store selection
-        selectedPersonality = card.dataset.personality;
-    });
-});
 
 // Settings modal
 const settingsModal = document.getElementById('settings-modal');
@@ -148,8 +179,12 @@ async function updateDisplay() {
         document.getElementById('current-streak').textContent = data.current_streak;
         document.getElementById('longest-streak').textContent = data.longest_streak;
 
-        // Update mode name
-        document.getElementById('mode-name').textContent = selectedPersonality.charAt(0).toUpperCase() + selectedPersonality.slice(1).replace('_', ' ');
+        // Update mode name - get the display name from the active personality card
+        const activeCard = document.querySelector('.personality-card.active');
+        if (activeCard) {
+            const displayName = activeCard.querySelector('.personality-name').textContent;
+            document.getElementById('mode-name').textContent = displayName;
+        }
 
         // Update tech info (only if monitoring, otherwise keep user's entered keys)
         if (data.is_monitoring) {
@@ -273,23 +308,35 @@ async function testShame() {
     }
 }
 
-// Update cooldown value display
-document.getElementById('cooldown').addEventListener('input', (e) => {
-    document.getElementById('cooldown-value').textContent = e.target.value;
-});
+// Initial update - wait for personalities to load first
+async function initialize() {
+    // Load personalities first
+    await loadPersonalities();
 
-// Button handlers
-document.getElementById('toggle-btn').addEventListener('click', toggleMonitoring);
-document.getElementById('test-btn').addEventListener('click', testShame);
-document.getElementById('reset-btn').addEventListener('click', resetStats);
+    // Set up event listeners
+    document.getElementById('cooldown').addEventListener('input', (e) => {
+        document.getElementById('cooldown-value').textContent = e.target.value;
+    });
 
-// Auto-update every 100ms for smooth video
-setInterval(() => {
-    updateVideo();
+    document.getElementById('toggle-btn').addEventListener('click', toggleMonitoring);
+    document.getElementById('test-btn').addEventListener('click', testShame);
+    document.getElementById('reset-btn').addEventListener('click', resetStats);
+
+    // Initial UI update
     updateDisplay();
-}, 100);
+    updateVideo();
+    updateUIForAPIKeys();
 
-// Initial update
-updateDisplay();
-updateVideo();
-updateUIForAPIKeys();
+    // Auto-update every 100ms for smooth video
+    setInterval(() => {
+        updateVideo();
+        updateDisplay();
+    }, 100);
+}
+
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+} else {
+    initialize();
+}

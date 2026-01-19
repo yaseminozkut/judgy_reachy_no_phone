@@ -2,7 +2,7 @@
 
 import logging
 
-from .config import get_prewritten_line, get_praise_line, PERSONALITIES
+from .config import get_prewritten_line, get_praise_line, PERSONALITIES, get_random_personality
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +33,30 @@ class LLMResponder:
             return get_prewritten_line(phone_count)
 
         try:
-            # Get personality
-            personality_data = PERSONALITIES.get(self.personality, PERSONALITIES["mixtape"])
-            personality_prompt = personality_data["shame"]
+            # Get personality - if mixtape, randomly pick one
+            if self.personality == "mixtape":
+                actual_personality = get_random_personality()
+            else:
+                actual_personality = self.personality
+
+            personality_data = PERSONALITIES.get(actual_personality, PERSONALITIES["angry_boss"])
+
+            # Build personality prompt from structured data
+            shame_data = personality_data["shame"]
+            voice_desc = personality_data["voice"]
+            avoid = personality_data.get("avoid", "")
+
+            # Construct prompt from structured data
+            personality_prompt = f"""{voice_desc}
+
+TONE: {shame_data['tone']}
+VOCAB: Use words like: {', '.join(shame_data['vocab'])}
+STRUCTURE: {shame_data['structure']}
+
+EXAMPLES:
+{chr(10).join('- ' + ex for ex in shame_data['examples'])}
+
+AVOID: {avoid}"""
 
             # Build context based on count
             if phone_count == 1:
@@ -58,12 +79,12 @@ class LLMResponder:
                         "role": "system",
                         "content": f"""TASK: Generate a NEGATIVE/SCOLDING response because someone just picked up their phone (BAD behavior).
 
-PERSONALITY: {personality_prompt}
+{personality_prompt}
 
 RULES:
 - Maximum 8 words. Prefer 3-5 words.
-- You can mention the count or not - be creative.
 - Be CRITICAL/NEGATIVE about picking up the phone.
+- Match the personality's voice exactly.
 - No emoji. No hashtags."""
                     },
                     {
@@ -84,9 +105,22 @@ RULES:
             return get_praise_line()
 
         try:
-            # Get personality
-            personality_data = PERSONALITIES.get(self.personality, PERSONALITIES["mixtape"])
-            personality_prompt = personality_data["praise"]
+            # Get personality - if mixtape, randomly pick one
+            if self.personality == "mixtape":
+                actual_personality = get_random_personality()
+            else:
+                actual_personality = self.personality
+
+            personality_data = PERSONALITIES.get(actual_personality, PERSONALITIES["angry_boss"])
+
+            # Build praise prompt from structured data
+            praise_data = personality_data["praise"]
+
+            # Construct prompt
+            personality_prompt = f"""TONE: {praise_data['tone']}
+
+EXAMPLES:
+{chr(10).join('- ' + ex for ex in praise_data['examples'])}"""
 
             response = self.client.chat.completions.create(
                 model="llama-3.1-8b-instant",
@@ -97,11 +131,12 @@ RULES:
                         "role": "system",
                         "content": f"""TASK: Generate a POSITIVE/APPROVING response because someone just put their phone down (GOOD behavior).
 
-PERSONALITY: {personality_prompt}
+{personality_prompt}
 
 RULES:
 - Maximum 5 words. Prefer 2-3 words.
 - Be POSITIVE/APPROVING about putting the phone down.
+- Match the personality's voice exactly.
 - No emoji."""
                     },
                     {

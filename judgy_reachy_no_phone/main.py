@@ -16,7 +16,7 @@ import cv2
 from reachy_mini import ReachyMini, ReachyMiniApp
 from pydantic import BaseModel
 
-from .config import Config
+from .config import Config, PERSONALITIES
 from .detection import PhoneDetector
 from .audio import LLMResponder, TextToSpeech
 from .animations import (
@@ -70,6 +70,19 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.camera_running = False
         self.camera_fps = 0
         self.detection_event_queue = []
+
+        # Register API endpoint for personalities (must be before server starts)
+        @self.settings_app.get("/api/personalities")
+        def get_personalities():
+            """Return list of available personalities from config."""
+            personalities_list = []
+            for key, data in PERSONALITIES.items():
+                personalities_list.append({
+                    "id": key,
+                    "name": data["name"],
+                    "voice": data["voice"]
+                })
+            return {"personalities": personalities_list}
 
     def _camera_thread(self, webcam, stop_event: threading.Event):
         """Fast camera capture and encoding thread."""
@@ -363,8 +376,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     logger.info("No Groq API key provided, using pre-written lines")
 
                 # Initialize TTS with custom voices if provided
-                eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
-                edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
+                eleven_voice = req.eleven_voice if req.eleven_voice else self.config.ELEVENLABS_VOICE_ID
+                edge_voice = req.edge_voice if req.edge_voice else self.config.EDGE_TTS_VOICE
 
                 if req.eleven_key:
                     logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}... voice: {eleven_voice}")
@@ -427,44 +440,65 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
             # Test ElevenLabs
             if req.eleven_key:
-                eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
                 try:
                     from elevenlabs import ElevenLabs
                     test_eleven = ElevenLabs(api_key=req.eleven_key)
+                    result["eleven_valid"] = True
+                    logger.info("ElevenLabs API key validated")
 
-                    # Test voice ID with small synthesis
-                    try:
-                        audio_gen = test_eleven.text_to_speech.convert(
-                            text="test",
-                            voice_id=eleven_voice,
-                            model_id="eleven_multilingual_v2"
-                        )
-                        # Consume generator to trigger any errors
-                        for _ in audio_gen:
-                            break
-                        result["eleven_valid"] = True
+                    # Only validate voice ID if user entered a custom one
+                    if req.eleven_voice:
+                        try:
+                            audio_gen = test_eleven.text_to_speech.convert(
+                                text="test",
+                                voice_id=req.eleven_voice,
+                                model_id="eleven_multilingual_v2"
+                            )
+                            # Consume generator to trigger any errors
+                            for _ in audio_gen:
+                                break
+                            result["eleven_voice_valid"] = True
+                            logger.info(f"ElevenLabs voice validated: {req.eleven_voice}")
+                        except Exception as voice_error:
+                            result["eleven_voice_valid"] = False
+                            logger.warning(f"ElevenLabs voice validation failed: {voice_error}")
+                            result["errors"].append(f"ElevenLabs voice '{req.eleven_voice}': Invalid or no access")
+                    else:
+                        # No custom voice entered, will use config default
                         result["eleven_voice_valid"] = True
-                        logger.info(f"ElevenLabs validated with voice: {eleven_voice}")
-                    except Exception as voice_error:
-                        result["eleven_valid"] = True  # Key is valid
-                        result["eleven_voice_valid"] = False  # But voice is not
-                        logger.warning(f"ElevenLabs voice validation failed: {voice_error}")
-                        result["errors"].append(f"ElevenLabs voice '{eleven_voice}': Invalid or no access")
+                        logger.info(f"No custom ElevenLabs voice, using default: {self.config.ELEVENLABS_VOICE_ID}")
+
                 except Exception as e:
                     logger.warning(f"ElevenLabs API key validation failed: {e}")
                     result["errors"].append(f"ElevenLabs key: {str(e)}")
 
-            # Test Edge TTS voice
-            edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
-            try:
-                import edge_tts
-                # Try to get voice info
-                asyncio.run(edge_tts.VoicesManager.create().find_voice(edge_voice))
+            # Test Edge TTS voice (only if user entered one)
+            if req.edge_voice:
+                try:
+                    import edge_tts
+                    # Validate by trying to create a Communicate object
+                    async def validate_edge_voice():
+                        try:
+                            communicate = edge_tts.Communicate("test", req.edge_voice)
+                            # If no error thrown, voice is valid
+                            return True
+                        except Exception:
+                            return False
+
+                    voice_valid = asyncio.run(validate_edge_voice())
+                    if voice_valid:
+                        result["edge_voice_valid"] = True
+                        logger.info(f"Edge TTS voice validated: {req.edge_voice}")
+                    else:
+                        result["errors"].append(f"Edge TTS voice '{req.edge_voice}': Not found")
+                        logger.warning(f"Edge TTS voice not found: {req.edge_voice}")
+                except Exception as e:
+                    logger.warning(f"Edge TTS validation error: {e}")
+                    # Don't block on validation errors
+                    result["edge_voice_valid"] = True
+            else:
+                # No custom voice entered, skip validation
                 result["edge_voice_valid"] = True
-                logger.info(f"Edge TTS voice validated: {edge_voice}")
-            except Exception as e:
-                logger.warning(f"Edge TTS voice validation failed: {e}")
-                result["errors"].append(f"Edge TTS voice '{edge_voice}': Not found")
 
             # Build mode string
             llm_text = "LLM + TTS" if result["groq_valid"] else "Pre-written lines"
@@ -496,8 +530,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             if req.groq_key:
                 self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
 
-            eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
-            edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
+            eleven_voice = req.eleven_voice if req.eleven_voice else self.config.ELEVENLABS_VOICE_ID
+            edge_voice = req.edge_voice if req.edge_voice else self.config.EDGE_TTS_VOICE
 
             if req.eleven_key:
                 self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice)
