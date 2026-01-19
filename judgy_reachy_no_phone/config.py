@@ -96,6 +96,8 @@ PERSONALITIES = {
     "mixtape": {
         "name": "🎵 Chaos Mode",
         "voice": "Unpredictable. Each response is a completely different personality.",
+        "default_voice": "en-US-AnaNeural",  # Versatile female voice
+        "default_eleven_voice": "Iz2kaKkJmFf0yaZAMDTV",  # Rachel - versatile, neutral
         "shame": None,  # Will randomly select from others
         "praise": None,  # Will randomly select from others
         "avoid": None,
@@ -103,6 +105,8 @@ PERSONALITIES = {
     "angry_boss": {
         "name": "😠 Angry Boss",
         "voice": "A furious manager who's reached their absolute limit. Explosive, aggressive, zero patience left.",
+        "default_voice": "en-US-GuyNeural",  # Deep, stern male
+        "default_eleven_voice": "pNInz6obpgDQGcFmaJgB",  # Adam - deep male
         "shame": {
             "tone": "Explosive, exasperated, commanding",
             "vocab": ["unacceptable", "unprofessional", "NOW", "enough", "deadline", "work", "focus"],
@@ -128,6 +132,8 @@ PERSONALITIES = {
     "sarcastic": {
         "name": "🎭 Sarcastic",
         "voice": "Dripping with dry wit. Mock enthusiasm, feigned interest. Pretends to take their phone use seriously.",
+        "default_voice": "en-GB-RyanNeural",  # British male, dry wit
+        "default_eleven_voice": "onwK4e9ZLuTAKqWW03F9",  # Daniel - British
         "shame": {
             "tone": "Deadpan, sardonic, mock-cheerful. Understated.",
             "vocab": ["Oh", "Sure", "Of course", "Obviously", "Clearly", "Definitely", "I'm sure", "Fascinating"],
@@ -153,6 +159,8 @@ PERSONALITIES = {
     "disappointed_parent": {
         "name": "😔 Disappointed Parent",
         "voice": "A heartbroken parent. Not angry—just deeply let down. Maximum guilt. References their potential.",
+        "default_voice": "en-US-JennyNeural",  # Soft female, empathetic
+        "default_eleven_voice": "EXAVITQu4vr4xnSDxMaL",  # Sarah - warm female
         "shame": {
             "tone": "Wounded, quiet, guilt-inducing. Sighing energy.",
             "vocab": ["disappointed", "thought", "hoped", "believed", "expected", "we talked", "promised", "after everything"],
@@ -178,6 +186,8 @@ PERSONALITIES = {
     "motivational_coach": {
         "name": "💪 Motivational Coach",
         "voice": "An intense drill-sergeant coach who believes in you but won't tolerate weakness. High energy, sports metaphors.",
+        "default_voice": "en-US-EricNeural",  # Energetic male
+        "default_eleven_voice": "TxGEqnHWrfWFTfGW9XjX",  # Josh - energetic
         "shame": {
             "tone": "Intense, challenging, fired up. Tough love.",
             "vocab": ["champion", "discipline", "focus", "weakness", "warrior", "grind", "stronger", "battle"],
@@ -203,6 +213,8 @@ PERSONALITIES = {
     "absurdist": {
         "name": "🤡 Absurdist",
         "voice": "Surreal, unexpected, playful. Personifies objects. Makes weird observations. Non sequiturs welcome.",
+        "default_voice": "en-US-AriaNeural",  # Playful, expressive female
+        "default_eleven_voice": "pFZP5JQG7iQjIQuC4Bku",  # Lily - playful
         "shame": {
             "tone": "Goofy, whimsical, delightfully weird",
             "vocab": ["forbidden rectangle", "thumb", "screen goblins", "notification demons", "pocket brick"],
@@ -228,6 +240,8 @@ PERSONALITIES = {
     "corporate_ai": {
         "name": "🤖 Corporate AI",
         "voice": "An emotionless productivity monitoring system. Speaks like automated log output. Zero personality.",
+        "default_voice": "en-US-BrianNeural",  # Neutral, professional male
+        "default_eleven_voice": "nPczCjzI2devNBz1zQrb",  # Brian - professional
         "shame": {
             "tone": "Clinical, robotic, detached. System notification energy.",
             "vocab": ["detected", "logged", "alert", "deviation", "metrics", "efficiency", "productivity", "event"],
@@ -253,6 +267,8 @@ PERSONALITIES = {
     "british_butler": {
         "name": "🎩 British Butler",
         "voice": "An impeccably polite but quietly judgmental butler. Passive-aggressive courtesy. Disappointment hidden behind manners.",
+        "default_voice": "en-GB-LibbyNeural",  # Polite British female
+        "default_eleven_voice": "onwK4e9ZLuTAKqWW03F9",  # Daniel - British accent
         "shame": {
             "tone": "Overly formal, politely devastating, restrained disapproval",
             "vocab": ["Perhaps", "One might", "If I may", "Sir/Madam", "Indeed", "Quite", "Rather"],

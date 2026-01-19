@@ -153,10 +153,11 @@ RULES:
 class TextToSpeech:
     """Convert text to speech using Edge TTS (free) or ElevenLabs."""
 
-    def __init__(self, elevenlabs_key: str = "", voice: str = "en-US-AnaNeural", eleven_voice_id: str = "H10ItvDnkRN5ysrvzT9J"):
+    def __init__(self, elevenlabs_key: str = "", voice: str = "", eleven_voice_id: str = "", personality: str = "mixtape"):
         self.elevenlabs_key = elevenlabs_key
-        self.edge_voice = voice
-        self.eleven_voice_id = eleven_voice_id
+        self.user_edge_voice = voice  # User's custom Edge TTS voice (overrides personality default)
+        self.user_eleven_voice = eleven_voice_id  # User's custom ElevenLabs voice (overrides personality default)
+        self.personality = personality
         self.eleven_client = None
         self.chars_used = 0
         self.MONTHLY_LIMIT = 9000  # Leave buffer under 10k
@@ -165,30 +166,43 @@ class TextToSpeech:
             try:
                 from elevenlabs import ElevenLabs
                 self.eleven_client = ElevenLabs(api_key=elevenlabs_key)
-                logger.info(f"ElevenLabs TTS initialized with voice: {eleven_voice_id}")
+                logger.info(f"ElevenLabs TTS initialized")
             except ImportError:
                 logger.warning("elevenlabs package not installed, using Edge TTS")
             except Exception as e:
                 logger.warning(f"ElevenLabs init failed: {e}, using Edge TTS")
 
+    def _get_voice_for_personality(self):
+        """Get the appropriate voice based on personality and user override."""
+        personality_data = PERSONALITIES.get(self.personality, PERSONALITIES["mixtape"])
+
+        # User override always wins
+        edge_voice = self.user_edge_voice if self.user_edge_voice else personality_data.get("default_voice", "en-US-AnaNeural")
+        eleven_voice = self.user_eleven_voice if self.user_eleven_voice else personality_data.get("default_eleven_voice", "21m00Tcm4TlvDq8ikWAM")
+
+        return edge_voice, eleven_voice
+
     async def synthesize(self, text: str, output_path: str = "/tmp/judgy_reachy_tts.mp3") -> str:
         """Convert text to speech, return path to audio file."""
+
+        # Get appropriate voices for current personality
+        edge_voice, eleven_voice = self._get_voice_for_personality()
 
         # Try ElevenLabs first if available and under limit
         if self.eleven_client and (self.chars_used + len(text)) < self.MONTHLY_LIMIT:
             try:
-                return await self._synthesize_elevenlabs(text, output_path)
+                return await self._synthesize_elevenlabs(text, output_path, eleven_voice)
             except Exception as e:
                 logger.warning(f"ElevenLabs failed: {e}, falling back to Edge TTS")
 
         # Fallback to Edge TTS (always works, unlimited)
-        return await self._synthesize_edge(text, output_path)
+        return await self._synthesize_edge(text, output_path, edge_voice)
 
-    async def _synthesize_elevenlabs(self, text: str, output_path: str) -> str:
+    async def _synthesize_elevenlabs(self, text: str, output_path: str, voice_id: str) -> str:
         """Use ElevenLabs for high-quality voice."""
         audio = self.eleven_client.text_to_speech.convert(
             text=text,
-            voice_id=self.eleven_voice_id,  # Custom or default voice
+            voice_id=voice_id,
             model_id="eleven_multilingual_v2",  # Good balance of emotion and speed
         )
 
@@ -200,12 +214,12 @@ class TextToSpeech:
         logger.debug(f"ElevenLabs TTS: {len(text)} chars, total: {self.chars_used}")
         return output_path
 
-    async def _synthesize_edge(self, text: str, output_path: str) -> str:
+    async def _synthesize_edge(self, text: str, output_path: str, voice: str) -> str:
         """Use Edge TTS (free, unlimited)."""
         import edge_tts
 
-        communicate = edge_tts.Communicate(text, self.edge_voice)
+        communicate = edge_tts.Communicate(text, voice)
         await communicate.save(output_path)
 
-        logger.debug(f"Edge TTS: {len(text)} chars")
+        logger.debug(f"Edge TTS: {len(text)} chars with voice {voice}")
         return output_path

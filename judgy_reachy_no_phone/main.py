@@ -43,10 +43,12 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
         # Components
         self.detector = PhoneDetector(confidence=self.config.DETECTION_CONFIDENCE)
-        self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY)
+        self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY, personality="mixtape")
         self.tts = TextToSpeech(
             elevenlabs_key=self.config.ELEVENLABS_API_KEY,
-            voice=self.config.EDGE_TTS_VOICE
+            voice=self.config.EDGE_TTS_VOICE,
+            eleven_voice_id=self.config.ELEVENLABS_VOICE_ID,
+            personality="mixtape"
         )
 
         # State
@@ -80,7 +82,9 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 personalities_list.append({
                     "id": key,
                     "name": data["name"],
-                    "voice": data["voice"]
+                    "voice": data["voice"],
+                    "default_voice": data.get("default_voice", ""),
+                    "default_eleven_voice": data.get("default_eleven_voice", "")
                 })
             return {"personalities": personalities_list}
 
@@ -381,10 +385,10 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
                 if req.eleven_key:
                     logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}... voice: {eleven_voice}")
-                    self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice)
+                    self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice, personality=req.personality)
                 else:
                     logger.info(f"No ElevenLabs key provided, using Edge TTS with voice: {edge_voice}")
-                    self.tts = TextToSpeech(voice=edge_voice)
+                    self.tts = TextToSpeech(voice=edge_voice, personality=req.personality)
 
                 self.config.COOLDOWN_SECONDS = req.cooldown
                 self.praise_enabled = req.praise
@@ -534,9 +538,9 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             edge_voice = req.edge_voice if req.edge_voice else self.config.EDGE_TTS_VOICE
 
             if req.eleven_key:
-                self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice)
+                self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice, personality=req.personality)
             else:
-                self.tts = TextToSpeech(voice=edge_voice)
+                self.tts = TextToSpeech(voice=edge_voice, personality=req.personality)
 
             # Run test without starting monitoring
             self.detector.phone_count += 1

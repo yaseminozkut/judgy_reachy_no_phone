@@ -1,5 +1,7 @@
 // State
 let selectedPersonality = 'mixtape';
+let currentVoicePersonality = null;
+let voiceOverrides = JSON.parse(localStorage.getItem('voiceOverrides') || '{}');
 
 // Enable personality selection
 function enablePersonalities() {
@@ -18,6 +20,36 @@ function disablePersonalities() {
         card.classList.add('disabled');
         card.style.pointerEvents = 'none';
         card.style.opacity = '0.5';
+    });
+}
+
+// Enable personality selection and voice editing
+function enablePersonalities() {
+    const cards = document.querySelectorAll('.personality-card');
+    cards.forEach(card => {
+        card.classList.remove('disabled');
+        card.style.pointerEvents = 'auto';
+        card.style.opacity = '1';
+    });
+
+    const settingsBtns = document.querySelectorAll('.personality-settings-btn');
+    settingsBtns.forEach(btn => {
+        btn.style.display = 'flex';
+    });
+}
+
+// Disable personality selection and voice editing
+function disablePersonalities() {
+    const cards = document.querySelectorAll('.personality-card');
+    cards.forEach(card => {
+        card.classList.add('disabled');
+        card.style.pointerEvents = 'none';
+        card.style.opacity = '0.5';
+    });
+
+    const settingsBtns = document.querySelectorAll('.personality-settings-btn');
+    settingsBtns.forEach(btn => {
+        btn.style.display = 'none';
     });
 }
 
@@ -46,14 +78,26 @@ async function loadPersonalities() {
                     <div class="personality-name">${name}</div>
                     <div class="personality-desc">${personality.voice}</div>
                 </div>
+                <button class="personality-settings-btn" data-personality="${personality.id}" title="Customize voice">⚙️</button>
                 <div class="personality-check">✓</div>
             `;
 
-            // Add click handler
-            card.addEventListener('click', () => {
+            // Add click handler for card selection
+            card.addEventListener('click', (e) => {
+                // Don't select if clicking settings button
+                if (e.target.classList.contains('personality-settings-btn')) {
+                    return;
+                }
                 document.querySelectorAll('.personality-card').forEach(c => c.classList.remove('active'));
                 card.classList.add('active');
                 selectedPersonality = personality.id;
+            });
+
+            // Add click handler for settings button
+            const settingsBtn = card.querySelector('.personality-settings-btn');
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openVoiceSettings(personality);
             });
 
             personalityList.appendChild(card);
@@ -68,13 +112,11 @@ async function loadPersonalities() {
 async function updateUIForAPIKeys() {
     const groqKey = document.getElementById('groq-key').value;
     const elevenKey = document.getElementById('eleven-key').value;
-    const elevenVoice = document.getElementById('eleven-voice').value;
-    const edgeVoice = document.getElementById('edge-voice').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
 
-    // If no keys, just update UI and disable personalities
-    if (!groqKey && !elevenKey) {
+    // If no Groq key, disable personalities
+    if (!groqKey) {
         document.getElementById('mode-text').textContent = 'YOLO | Pre-written lines → Edge TTS';
         document.getElementById('api-notice').classList.remove('hidden');
         disablePersonalities();
@@ -82,6 +124,9 @@ async function updateUIForAPIKeys() {
     }
 
     try {
+        // Get voice override for selected personality
+        const voiceOverride = voiceOverrides[selectedPersonality] || {};
+
         // Validate keys with backend
         const response = await fetch('/api/validate-keys', {
             method: 'POST',
@@ -89,8 +134,8 @@ async function updateUIForAPIKeys() {
             body: JSON.stringify({
                 groq_key: groqKey,
                 eleven_key: elevenKey,
-                eleven_voice: elevenVoice,
-                edge_voice: edgeVoice,
+                eleven_voice: voiceOverride.eleven || '',
+                edge_voice: voiceOverride.edge || '',
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
@@ -121,6 +166,65 @@ async function updateUIForAPIKeys() {
     } catch (e) {
         console.error('Key validation failed:', e);
     }
+}
+
+// Open voice settings for a personality
+function openVoiceSettings(personality) {
+    currentVoicePersonality = personality;
+
+    const modal = document.getElementById('voice-settings-modal');
+    const title = document.getElementById('voice-settings-title');
+    const edgeInput = document.getElementById('voice-edge');
+    const elevenInput = document.getElementById('voice-eleven');
+    const edgeDefault = document.getElementById('voice-edge-default');
+    const elevenDefault = document.getElementById('voice-eleven-default');
+
+    // Set title
+    const nameMatch = personality.name.match(/^(\S+)\s+(.+)$/);
+    const name = nameMatch ? nameMatch[2] : personality.name;
+    title.textContent = `Voice Settings - ${name}`;
+
+    // Load current overrides or show defaults
+    const overrides = voiceOverrides[personality.id] || {};
+    edgeInput.value = overrides.edge || '';
+    elevenInput.value = overrides.eleven || '';
+
+    // Show default voices from backend (we'll need to add these to the API response)
+    edgeDefault.textContent = `Default: Loading...`;
+    elevenDefault.textContent = `Default: Loading...`;
+
+    // Fetch default voices for this personality
+    fetch(`/api/personalities`)
+        .then(r => r.json())
+        .then(data => {
+            const p = data.personalities.find(x => x.id === personality.id);
+            if (p) {
+                edgeDefault.textContent = `Default: ${p.default_voice || 'None'}`;
+                elevenDefault.textContent = `Default: ${p.default_eleven_voice || 'None'}`;
+            }
+        });
+
+    modal.classList.add('active');
+}
+
+// Save voice settings
+function saveVoiceSettings() {
+    const edgeVoice = document.getElementById('voice-edge').value.trim();
+    const elevenVoice = document.getElementById('voice-eleven').value.trim();
+
+    if (!currentVoicePersonality) return;
+
+    // Save overrides (empty string means use default)
+    voiceOverrides[currentVoicePersonality.id] = {
+        edge: edgeVoice,
+        eleven: elevenVoice
+    };
+
+    localStorage.setItem('voiceOverrides', JSON.stringify(voiceOverrides));
+
+    // Close modal
+    document.getElementById('voice-settings-modal').classList.remove('active');
+    currentVoicePersonality = null;
 }
 
 // Settings modal
@@ -258,10 +362,11 @@ async function updateDisplay() {
 async function toggleMonitoring() {
     const groqKey = document.getElementById('groq-key').value;
     const elevenKey = document.getElementById('eleven-key').value;
-    const elevenVoice = document.getElementById('eleven-voice').value;
-    const edgeVoice = document.getElementById('edge-voice').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+
+    // Get voice override for selected personality
+    const voiceOverride = voiceOverrides[selectedPersonality] || {};
 
     try {
         await fetch('/api/toggle', {
@@ -270,8 +375,8 @@ async function toggleMonitoring() {
             body: JSON.stringify({
                 groq_key: groqKey,
                 eleven_key: elevenKey,
-                eleven_voice: elevenVoice,
-                edge_voice: edgeVoice,
+                eleven_voice: voiceOverride.eleven || '',
+                edge_voice: voiceOverride.edge || '',
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
@@ -305,10 +410,11 @@ async function resetStats() {
 async function testShame() {
     const groqKey = document.getElementById('groq-key').value;
     const elevenKey = document.getElementById('eleven-key').value;
-    const elevenVoice = document.getElementById('eleven-voice').value;
-    const edgeVoice = document.getElementById('edge-voice').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+
+    // Get voice override for selected personality
+    const voiceOverride = voiceOverrides[selectedPersonality] || {};
 
     try {
         await fetch('/api/test', {
@@ -317,8 +423,8 @@ async function testShame() {
             body: JSON.stringify({
                 groq_key: groqKey,
                 eleven_key: elevenKey,
-                eleven_voice: elevenVoice,
-                edge_voice: edgeVoice,
+                eleven_voice: voiceOverride.eleven || '',
+                edge_voice: voiceOverride.edge || '',
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
@@ -345,10 +451,24 @@ async function initialize() {
     document.getElementById('test-btn').addEventListener('click', testShame);
     document.getElementById('reset-btn').addEventListener('click', resetStats);
 
+    // Voice settings modal
+    document.getElementById('close-voice-settings').addEventListener('click', () => {
+        document.getElementById('voice-settings-modal').classList.remove('active');
+    });
+    document.getElementById('save-voice-settings').addEventListener('click', saveVoiceSettings);
+    document.getElementById('voice-settings-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'voice-settings-modal') {
+            e.target.classList.remove('active');
+        }
+    });
+
     // Initial UI update
     updateDisplay();
     updateVideo();
     updateUIForAPIKeys();
+
+    // Start with personalities disabled (no Groq key on initial load)
+    disablePersonalities();
 
     // Start with personalities disabled (no API key on initial load)
     disablePersonalities();
