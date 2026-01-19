@@ -329,7 +329,7 @@ PERSONALITIES = {
     },
 
     "mixtape": {
-        "name": "🎵 Chaos Baby",
+        "name": "🐣 Chaos Baby",
         "voice": "Unpredictable. Each response is a completely different personality.",
         "default_voice": "en-US-AnaNeural",  # Versatile female voice
         "default_eleven_voices": [  # List of voice IDs to try in order (will use first available)
