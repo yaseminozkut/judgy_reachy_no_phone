@@ -372,11 +372,13 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 return {"button_text": button_text}
             else:
                 # Start or Continue monitoring
+                # Always update LLM responder with personality (for prewritten lines even without API key)
                 if req.groq_key:
                     logger.info(f"Initializing LLM with Groq API key: {req.groq_key[:10]}... personality: {req.personality}")
                     self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
                 else:
-                    logger.info("No Groq API key provided, using pre-written lines")
+                    logger.info(f"No Groq API key provided, using pre-written lines with personality: {req.personality}")
+                    self.llm = LLMResponder(api_key="", personality=req.personality)
 
                 # Initialize TTS - pass custom voices only if explicitly set (empty string means use personality default)
                 if req.eleven_key:
@@ -535,8 +537,11 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         @self.settings_app.post("/api/test")
         def test_shame(req: ToggleRequest):
             # Apply settings from UI before testing (but don't start monitoring)
+            # Always update LLM responder with personality (for prewritten lines even without API key)
             if req.groq_key:
                 self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
+            else:
+                self.llm = LLMResponder(api_key="", personality=req.personality)
 
             # Pass voice overrides only if explicitly set (empty string means use personality default)
             if req.eleven_key:

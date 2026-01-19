@@ -65,8 +65,8 @@ async function updateUIForAPIKeys() {
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
 
-    // If no Groq key, show notice but keep personalities enabled (they use pre-written lines)
-    if (!groqKey) {
+    // If no API keys at all, show default message
+    if (!groqKey && !elevenKey) {
         document.getElementById('mode-text').textContent = 'YOLO | Pre-written personality lines → Edge TTS';
         document.getElementById('api-notice').classList.remove('hidden');
         // Keep personalities enabled - they still have different voices and pre-written lines
@@ -77,7 +77,7 @@ async function updateUIForAPIKeys() {
         // Get voice override for selected personality
         const voiceOverride = voiceOverrides[selectedPersonality] || {};
 
-        // Validate keys with backend
+        // Validate keys with backend (even if only one is provided)
         const response = await fetch('/api/validate-keys', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

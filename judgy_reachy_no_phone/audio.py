@@ -199,12 +199,13 @@ class TextToSpeech:
         self.eleven_client = None
         self.chars_used = 0
         self.MONTHLY_LIMIT = 9000  # Leave buffer under 10k
+        self.working_voice_cache = {}  # Cache of personality -> working voice ID
 
         if elevenlabs_key:
             try:
                 from elevenlabs import ElevenLabs
                 self.eleven_client = ElevenLabs(api_key=elevenlabs_key)
-                logger.info(f"ElevenLabs TTS initialized")
+                logger.info(f"ElevenLabs TTS initialized (voices will be validated on first use)")
             except ImportError:
                 logger.warning("elevenlabs package not installed, using Edge TTS")
             except Exception as e:
@@ -214,26 +215,60 @@ class TextToSpeech:
         """Get the appropriate voice based on personality and user override."""
         personality_data = PERSONALITIES.get(self.personality, PERSONALITIES["mixtape"])
 
-        # User override always wins
+        # User override always wins for edge voice
         edge_voice = self.user_edge_voice if self.user_edge_voice else personality_data.get("default_voice", "en-US-AnaNeural")
-        eleven_voice = self.user_eleven_voice if self.user_eleven_voice else personality_data.get("default_eleven_voice", "21m00Tcm4TlvDq8ikWAM")
 
-        return edge_voice, eleven_voice
+        # For ElevenLabs voice, handle list of voices (try in order) or single voice (backward compatibility)
+        if self.user_eleven_voice:
+            # User specified a custom voice
+            eleven_voices = [self.user_eleven_voice]
+        else:
+            # Get from personality config - handle both list and single voice
+            eleven_voice_data = personality_data.get("default_eleven_voices", personality_data.get("default_eleven_voice", "21m00Tcm4TlvDq8ikWAM"))
+            if isinstance(eleven_voice_data, list):
+                eleven_voices = eleven_voice_data
+            else:
+                eleven_voices = [eleven_voice_data]
+
+        return edge_voice, eleven_voices
 
     async def synthesize(self, text: str, output_path: str = "/tmp/judgy_reachy_tts.mp3") -> str:
         """Convert text to speech, return path to audio file."""
 
         # Get appropriate voices for current personality
-        edge_voice, eleven_voice = self._get_voice_for_personality()
+        edge_voice, eleven_voices = self._get_voice_for_personality()
 
         # Try ElevenLabs first if available and under limit
         if self.eleven_client and (self.chars_used + len(text)) < self.MONTHLY_LIMIT:
-            try:
-                return await self._synthesize_elevenlabs(text, output_path, eleven_voice)
-            except Exception as e:
-                logger.warning(f"ElevenLabs failed: {e}, falling back to Edge TTS")
+            # Check cache first
+            if self.personality in self.working_voice_cache:
+                try:
+                    cached_voice = self.working_voice_cache[self.personality]
+                    logger.info(f"Using cached ElevenLabs voice: {cached_voice}")
+                    return await self._synthesize_elevenlabs(text, output_path, cached_voice)
+                except Exception as e:
+                    logger.warning(f"Cached voice failed: {e}, trying other voices")
+                    # Remove from cache if it failed
+                    del self.working_voice_cache[self.personality]
+
+            # Try each voice in the list until one works
+            for voice_id in eleven_voices:
+                try:
+                    logger.info(f"Trying ElevenLabs voice: {voice_id}")
+                    result = await self._synthesize_elevenlabs(text, output_path, voice_id)
+                    # Success! Cache this voice for future use
+                    self.working_voice_cache[self.personality] = voice_id
+                    logger.info(f"✓ Voice {voice_id} works! Cached for {self.personality}")
+                    return result
+                except Exception as e:
+                    logger.warning(f"Voice {voice_id} failed: {e}, trying next...")
+                    continue
+
+            # All voices failed
+            logger.warning(f"All ElevenLabs voices failed for {self.personality}, falling back to Edge TTS")
 
         # Fallback to Edge TTS (always works, unlimited)
+        logger.info(f"Using Edge TTS with voice: {edge_voice}")
         return await self._synthesize_edge(text, output_path, edge_voice)
 
     async def _synthesize_elevenlabs(self, text: str, output_path: str, voice_id: str) -> str:

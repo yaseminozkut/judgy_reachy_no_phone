@@ -97,7 +97,11 @@ PERSONALITIES = {
         "name": "🎵 Chaos Mode",
         "voice": "Unpredictable. Each response is a completely different personality.",
         "default_voice": "en-US-AnaNeural",  # Versatile female voice
-        "default_eleven_voice": "Iz2kaKkJmFf0yaZAMDTV",  # Rachel - versatile, neutral
+        "default_eleven_voices": [  # List of voice IDs to try in order (will use first available)
+            "H10ItvDnkRN5ysrvzT9J",  # My custom
+            "Nggzl2QAXh3OijoXD116",  # Candy - Young and Sweet
+            "cgSgspJ2msm6clMCkdW9",  # Jessica - Playful, Bright
+        ],
         "prewritten_shame": None,  # Will randomly select from other personalities
         "prewritten_praise": None,  # Will randomly select from other personalities
         "shame": None,  # Will randomly select from others
@@ -108,7 +112,10 @@ PERSONALITIES = {
         "name": "😠 Angry Boss",
         "voice": "A furious manager who's reached their absolute limit. Explosive, aggressive, zero patience left.",
         "default_voice": "en-US-EricNeural",  # Deep, stern male
-        "default_eleven_voice": "DGzg6RaUqxGRTHSBjfgF",
+        "default_eleven_voices": [
+            "TxWZERZ5Hc6h9dGxVmXa",  # Jerry B. - Gruff and Gritty Commander
+            "cjVigY5qzO86Huf0OWal",  # Eric - Smooth, Trustworthy
+        ],
         "prewritten_shame": [
             "Put it down!",
             "Unbelievable!",
@@ -150,7 +157,9 @@ PERSONALITIES = {
         "name": "🎭 Sarcastic",
         "voice": "Dripping with dry wit. Mock enthusiasm, feigned interest. Pretends to take their phone use seriously.",
         "default_voice": "en-US-AvaMultilingualNeural",  # Female, dry wit
-        "default_eleven_voice": "50lF5fQMqcxbDQOW6qOs",
+        "default_eleven_voices": [
+            "FGY2WhTYpPnrIDTdsKH5",  # Laura - Enthusiast, Quirky Attitude
+        ],
         "prewritten_shame": [
             "Oh, how vital.",
             "Riveting stuff, I'm sure.",
@@ -191,7 +200,9 @@ PERSONALITIES = {
         "name": "😔 Disappointed Parent",
         "voice": "A heartbroken parent. Not angry—just deeply let down. Maximum guilt. References their potential.",
         "default_voice": "en-US-AvaNeural",  # Soft female, empathetic
-        "default_eleven_voice": "roYauZ4bOLAKvVZTPLre",
+        "default_eleven_voices": [
+            "Xb7hH8MSUJpSbSDYk0k2",  # Alice - Clear, Engaging
+        ],
         "prewritten_shame": [
             "I'm so disappointed...",
             "We talked about this.",
@@ -233,7 +244,9 @@ PERSONALITIES = {
         "name": "💪 Motivational Coach",
         "voice": "An intense drill-sergeant coach who believes in you but won't tolerate weakness. High energy, sports metaphors.",
         "default_voice": "en-US-GuyNeural",  # Energetic male
-        "default_eleven_voice": "84Fal4DSXWfp7nJ8emqQ",
+        "default_eleven_voices": [
+            "IKne3meq5aSn9XLyUdCD",  # Charlie - Deep, Confident, Energetic
+        ],
         "prewritten_shame": [
             "Where's your discipline?!",
             "Champions don't quit!",
@@ -275,7 +288,9 @@ PERSONALITIES = {
         "name": "🤡 Absurdist",
         "voice": "Surreal, unexpected, playful. Personifies objects. Makes weird observations. Non sequiturs welcome.",
         "default_voice": "en-US-AriaNeural",  # Playful, expressive female
-        "default_eleven_voice": "G0yjIg3xY8gEJZkHpjVm",
+        "default_eleven_voices": [
+            "cgSgspJ2msm6clMCkdW9",  # Jessica - Playful, Bright, Warm
+        ],
         "prewritten_shame": [
             "Your thumb called. It's exhausted.",
             "Emergency cat video?",
@@ -316,7 +331,10 @@ PERSONALITIES = {
         "name": "🤖 Corporate AI",
         "voice": "An emotionless productivity monitoring system. Speaks like automated log output. Zero personality.",
         "default_voice": "en-US-MichelleNeural",  # Neutral, professional male
-        "default_eleven_voice": "weA4Q36twV5kwSaTEL0Q",
+        "default_eleven_voices": [
+            "weA4Q36twV5kwSaTEL0Q",  # Eva - Futuristic Robot Helper
+            "EXAVITQu4vr4xnSDxMaL",  # Sarah - Mature, Reassuring, Confident
+        ],
         "prewritten_shame": [
             "Distraction event detected.",
             "Alert: phone in hand.",
@@ -358,7 +376,9 @@ PERSONALITIES = {
         "name": "🎩 British Butler",
         "voice": "An impeccably polite but quietly judgmental butler. Passive-aggressive courtesy. Disappointment hidden behind manners.",
         "default_voice": "en-GB-RyanNeural",  # Polite British male
-        "default_eleven_voice": "lUTamkMw7gOzZbFIwmq4",  # James - Professional British Male
+        "default_eleven_voices": [
+            "JBFqnCBsd6RMkjVDRZzb",  # George - Warm, Captivating Storyteller (British)
+        ],
         "prewritten_shame": [
             "If I may say so, sir...",
             "The telephone. Again. Indeed.",
