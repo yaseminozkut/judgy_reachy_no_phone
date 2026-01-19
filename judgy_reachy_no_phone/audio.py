@@ -118,7 +118,7 @@ RULES:
 class TextToSpeech:
     """Convert text to speech using Edge TTS (free) or ElevenLabs."""
 
-    def __init__(self, elevenlabs_key: str = "", voice: str = "en-US-GuyNeural"):
+    def __init__(self, elevenlabs_key: str = "", voice: str = "en-US-AnaNeural"):
         self.elevenlabs_key = elevenlabs_key
         self.edge_voice = voice
         self.eleven_client = None
@@ -152,8 +152,8 @@ class TextToSpeech:
         """Use ElevenLabs for high-quality voice."""
         audio = self.eleven_client.text_to_speech.convert(
             text=text,
-            voice_id="JBFqnCBsd6RMkjVDRZzb",  # George - good for snarky
-            model_id="eleven_turbo_v2_5",
+            voice_id="Nggzl2QAXh3OijoXD116",  # cute voice H10ItvDnkRN5ysrvzT9J
+            model_id="eleven_multilingual_v2",  # Good balance of emotion and speed
         )
 
         with open(output_path, "wb") as f:

@@ -18,7 +18,7 @@ class Config:
     ELEVENLABS_API_KEY: str = ""       # Get free at elevenlabs.io
 
     # TTS settings
-    EDGE_TTS_VOICE: str = "en-US-GuyNeural"  # Free voice
+    EDGE_TTS_VOICE: str = "en-US-AnaNeural"  # Free voice
     ELEVENLABS_VOICE_ID: str = "JBFqnCBsd6RMkjVDRZzb"  # "George"
 
 
