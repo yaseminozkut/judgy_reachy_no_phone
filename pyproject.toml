@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "judgy_reachy_no_phone"
 version = "0.1.0"
+authors = [{ name = "Yasemin Ozkut", email = "ozkutyasemin@gmail.com" }]
 description = "A Reachy Mini app that detects phone pickups and shames you with snarky comments"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,7 +15,8 @@ dependencies = [
     "opencv-python",
     "numpy",
     "ultralytics",
-    "edge-tts"
+    "edge-tts",
+    "pydantic"
 ]
 keywords = ["reachy-mini-app"]
 
