@@ -74,7 +74,7 @@ async function updateUIForAPIKeys() {
 
     // If no API keys at all, show default message
     if (!groqKey && !elevenKey) {
-        document.getElementById('mode-text').textContent = 'YOLO | Pre-written personality lines → Edge TTS';
+        document.getElementById('mode-text').textContent = 'YOLO26n | Pre-written personality lines → Edge TTS';
         document.getElementById('api-notice').classList.remove('hidden');
         // Keep personalities enabled - they still have different voices and pre-written lines
         return;

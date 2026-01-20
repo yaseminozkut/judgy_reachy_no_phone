@@ -19,7 +19,7 @@ Stop checking your phone and get back to work! This app uses computer vision to 
 
 ## Features
 
-- 📱 **Phone Detection**: Uses YOLOv8 to detect when you pick up your phone
+- 📱 **Phone Detection**: Uses YOLO26n to detect when you pick up your phone
 - 🗣️ **Snarky Responses**: LLM-generated or pre-written judgmental comments
 - 🔊 **Text-to-Speech**: Robot speaks the shame out loud with expressive voice
 - 🤖 **Expressive Animations**: Different reactions based on offense count
@@ -29,7 +29,7 @@ Stop checking your phone and get back to work! This app uses computer vision to 
 ## How It Works
 
 1. **Camera watches you** - Reachy Mini monitors the camera feed
-2. **Phone detected** - YOLOv8 detects when you pick up your phone
+2. **Phone detected** - YOLO26n detects when you pick up your phone
 3. **Shame delivered** - Robot gives you a snarky comment via TTS
 4. **Robot reacts** - Expressive animations get more dramatic with repeat offenses
 
@@ -46,7 +46,7 @@ Stop checking your phone and get back to work! This app uses computer vision to 
 
 | Component | Free Option | Premium Option |
 |-----------|-------------|----------------|
-| Detection | YOLOv8 (local) | - |
+| Detection | YOLO26n (local) | - |
 | LLM | Pre-written lines | Groq (free tier) |
 | TTS | Edge TTS (unlimited) | ElevenLabs (10k chars/month) |
 
@@ -114,7 +114,7 @@ The app includes 20+ pre-written responses that work without any API:
 
 ## Technical Details
 
-- **Detection**: YOLOv8 nano model for fast inference
+- **Detection**: YOLO26n nano model for fast inference
 - **Phone Class ID**: COCO dataset class 67 ("cell phone")
 - **Detection Threshold**: 3 consecutive frames to confirm pickup
 - **Putdown Threshold**: 15 frames to confirm phone down (avoids flicker)

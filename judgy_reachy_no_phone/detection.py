@@ -41,7 +41,7 @@ class PhoneDetector:
 
         try:
             from ultralytics import YOLO
-            self.yolo_model = YOLO("yolov8n.pt")
+            self.yolo_model = YOLO("yolo26n.pt")
             self._initialized = True
             logger.info("YOLO model loaded")
             return True

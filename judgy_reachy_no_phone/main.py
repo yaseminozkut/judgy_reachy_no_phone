@@ -373,7 +373,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             else:
                 status_text = "✅ Phone-free"
 
-            mode_text = f"YOLO | {'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
+            mode_text = f"YOLO26n | {'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
 
             # Determine button text
             if self.is_monitoring:
@@ -555,7 +555,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             # Build mode string
             llm_text = "LLM + TTS" if result["groq_valid"] else "Pre-written lines"
             tts_text = "ElevenLabs" if result["eleven_valid"] else "Edge TTS"
-            result["mode"] = f"YOLO | {llm_text} → {tts_text}"
+            result["mode"] = f"YOLO26n | {llm_text} → {tts_text}"
 
             return result
 
