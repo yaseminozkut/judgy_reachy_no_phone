@@ -104,12 +104,12 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             return {"personalities": personalities_list}
 
     def _camera_thread(self, webcam, stop_event: threading.Event):
-        """Fast camera capture and encoding thread."""
+        """Fast camera capture and encoding thread (for laptop webcam in simulation)."""
         fps_counter = 0
         fps_start = time.time()
         detection_skip = 0
 
-        logger.info("Camera thread started")
+        logger.info("Laptop camera thread started (simulation mode)")
 
         try:
             while not stop_event.is_set() and self.camera_running:
@@ -155,7 +155,61 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 time.sleep(0.01)  # ~100 FPS max
 
         finally:
-            logger.info("Camera thread stopped")
+            logger.info("Laptop camera thread stopped")
+
+    def _robot_camera_thread(self, reachy_mini: ReachyMini, stop_event: threading.Event):
+        """Camera thread using robot's media system (for real robot)."""
+        fps_counter = 0
+        fps_start = time.time()
+        detection_skip = 0
+
+        logger.info("Robot camera thread started")
+
+        try:
+            while not stop_event.is_set() and self.camera_running:
+                frame = reachy_mini.media.get_frame()
+                if frame is None:
+                    time.sleep(0.01)
+                    continue
+
+                # Store frame for detection
+                self.latest_frame = frame.copy()
+
+                # Calculate FPS
+                fps_counter += 1
+                if time.time() - fps_start >= 1.0:
+                    self.camera_fps = fps_counter
+                    fps_counter = 0
+                    fps_start = time.time()
+
+                # Run detection every 3rd frame
+                if self.is_monitoring and (detection_skip % 3 == 0):
+                    try:
+                        event = self.detector.process_frame(
+                            frame,
+                            pickup_threshold=self.config.PICKUP_THRESHOLD,
+                            putdown_threshold=self.config.PUTDOWN_THRESHOLD,
+                            cooldown=self.config.COOLDOWN_SECONDS
+                        )
+                        # Store event for main thread to handle
+                        if event:
+                            self.detection_event_queue.append(event)
+                    except Exception as e:
+                        logger.error(f"Detection error: {e}")
+
+                detection_skip += 1
+
+                # Draw detection boxes only (no text overlays)
+                frame_with_boxes = self.detector.draw_detections(frame)
+
+                # Encode as JPEG for web display
+                _, buffer = cv2.imencode('.jpg', frame_with_boxes, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                self.latest_frame_jpeg = base64.b64encode(buffer).decode('utf-8')
+
+                time.sleep(0.01)  # ~100 FPS max
+
+        finally:
+            logger.info("Robot camera thread stopped")
 
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         """Main loop."""
@@ -171,17 +225,18 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         # Initialize detector
         self.detector.initialize()
 
-        # For testing: Use Mac webcam instead of robot camera
-        USE_WEBCAM = True  # Set to False to use robot camera
+        # Auto-detect: Use laptop webcam in simulation, robot camera otherwise
+        is_simulation = reachy_mini.client.get_status()["simulation_enabled"]
         webcam = None
-        if USE_WEBCAM:
-            logger.info("Opening Mac webcam for testing...")
+
+        if is_simulation:
+            logger.info("Simulation mode detected - using laptop webcam...")
             webcam = cv2.VideoCapture(0)
             if not webcam.isOpened():
-                logger.error("Failed to open webcam!")
+                logger.error("Failed to open laptop webcam!")
                 webcam = None
             else:
-                logger.info("Webcam opened successfully!")
+                logger.info("Laptop webcam opened successfully!")
                 self.camera_running = True
 
                 # Start fast camera thread
@@ -191,6 +246,17 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     daemon=True
                 )
                 camera_thread.start()
+        else:
+            logger.info("Real robot detected - using robot camera...")
+            self.camera_running = True
+
+            # Start camera thread with robot's media system
+            camera_thread = threading.Thread(
+                target=self._robot_camera_thread,
+                args=(reachy_mini, stop_event),
+                daemon=True
+            )
+            camera_thread.start()
 
         # Detection and robot control loop (separate from camera display)
         breath_counter = 0
