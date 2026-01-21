@@ -1,3 +1,17 @@
+---
+title: Judgy Reachy No Phone
+emoji: 📱
+colorFrom: red
+colorTo: purple
+sdk: static
+pinned: false
+license: apache-2.0
+short_description: Get off your phone! AI vision catches you scrolling and delivers snarky robot shame.
+tags:
+ - reachy_mini
+ - reachy_mini_python_app
+---
+
 # 📱 Judgy Reachy No Phone 🤖 - Feel free to shame yourself and others!
 
 **A Reachy Mini app that detects when you pick up your phone and shames you with snarky comments.**
@@ -20,21 +34,12 @@ Stop checking your phone and get back to work! This app uses computer vision to 
 3. **Shame delivered** - Robot gives you a snarky comment via TTS
 4. **Robot reacts** - Expressive animations get more dramatic with repeat offenses
 
-### Robot Reactions
-
-| Offense Count | Animation | Reaction |
-|---------------|-----------|----------|
-| 1st pickup | Curious head tilt | "The phone? Already?" |
-| 2-3 pickups | Disappointed head shake | "Again?" |
-| 4+ pickups | Dramatic sigh, looks away | "I've lost count." |
-| Phone down | Approving nod | "Good. Back to work." |
-
 ## 100% Free Stack
 
 | Component | Free Option | Premium Option |
 |-----------|-------------|----------------|
 | Detection | YOLO26n (local) | - |
-| LLM | Pre-written lines | Groq (free tier) |
+| LLM | Pre-written lines | Groq (free tier using LLama 3.1-8b-instant) |
 | TTS | Edge TTS (unlimited) | ElevenLabs (10k chars/month) |
 
 ## Prerequisites
