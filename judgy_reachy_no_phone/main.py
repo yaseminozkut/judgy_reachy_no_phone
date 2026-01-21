@@ -287,7 +287,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     # Only do idle breathing if no events pending (to avoid blocking)
                     if self.is_monitoring and not self.detector.phone_visible and len(self.detection_event_queue) == 0:
                         try:
-                            idle_breathing(reachy_mini)
+                            # Pass callback to check for events during breathing
+                            idle_breathing(reachy_mini, should_stop=lambda: len(self.detection_event_queue) > 0)
                         except:
                             pass
 
