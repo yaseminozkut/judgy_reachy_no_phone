@@ -1,32 +1,98 @@
 // State
-let selectedPersonality = 'mixtape';
+let selectedPersonality = 'pure_reachy';
+let currentVoicePersonality = null;
+let voiceOverrides = JSON.parse(localStorage.getItem('voiceOverrides') || '{}');
+
+// Load personalities from config dynamically
+async function loadPersonalities() {
+    try {
+        const response = await fetch('/api/personalities');
+        const data = await response.json();
+
+        const personalityList = document.getElementById('personality-list');
+        personalityList.innerHTML = '';
+
+        data.personalities.forEach((personality, index) => {
+            // Extract emoji and name from "😠 Angry Boss" format
+            const nameMatch = personality.name.match(/^(\S+)\s+(.+)$/);
+            const emoji = nameMatch ? nameMatch[1] : '🤖';
+            const name = nameMatch ? nameMatch[2] : personality.name;
+
+            const card = document.createElement('div');
+            card.className = 'personality-card' + (personality.id === 'pure_reachy' ? ' active' : '');
+            card.dataset.personality = personality.id;
+
+            card.innerHTML = `
+                <div class="personality-emoji">${emoji}</div>
+                <div class="personality-info">
+                    <div class="personality-name">${name}</div>
+                    <div class="personality-desc">${personality.voice}</div>
+                </div>
+                <button class="personality-settings-btn" data-personality="${personality.id}" title="Customize voice">⚙️</button>
+                <div class="personality-check">✓</div>
+            `;
+
+            // Add click handler for card selection
+            card.addEventListener('click', async (e) => {
+                // Don't select if clicking settings button
+                if (e.target.classList.contains('personality-settings-btn')) {
+                    return;
+                }
+                document.querySelectorAll('.personality-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                selectedPersonality = personality.id;
+
+                // If monitoring is running, update personality in real-time
+                const statusResponse = await fetch('/api/status');
+                const statusData = await statusResponse.json();
+                if (statusData.is_monitoring) {
+                    await updatePersonalityWhileRunning();
+                }
+            });
+
+            // Add click handler for settings button
+            const settingsBtn = card.querySelector('.personality-settings-btn');
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openVoiceSettings(personality);
+            });
+
+            personalityList.appendChild(card);
+        });
+
+    } catch (e) {
+        console.error('Failed to load personalities:', e);
+    }
+}
 
 // Update UI based on API keys (without starting monitoring)
 async function updateUIForAPIKeys() {
     const groqKey = document.getElementById('groq-key').value;
     const elevenKey = document.getElementById('eleven-key').value;
-    const elevenVoice = document.getElementById('eleven-voice').value;
-    const edgeVoice = document.getElementById('edge-voice').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
 
-    // If no keys, just update UI
+    // If no API keys at all, show default message
     if (!groqKey && !elevenKey) {
-        document.getElementById('mode-text').textContent = 'YOLO | Pre-written lines → Edge TTS';
+        document.getElementById('mode-text').textContent = 'YOLO26n | Pre-written personality lines → Edge TTS';
         document.getElementById('api-notice').classList.remove('hidden');
+        // Keep personalities enabled - they still have different voices and pre-written lines
         return;
     }
 
     try {
-        // Validate keys with backend
+        // Get voice override for selected personality
+        const voiceOverride = voiceOverrides[selectedPersonality] || {};
+
+        // Validate keys with backend (even if only one is provided)
         const response = await fetch('/api/validate-keys', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 groq_key: groqKey,
                 eleven_key: elevenKey,
-                eleven_voice: elevenVoice,
-                edge_voice: edgeVoice,
+                eleven_voice: voiceOverride.eleven || '',
+                edge_voice: voiceOverride.edge || '',
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
@@ -39,7 +105,7 @@ async function updateUIForAPIKeys() {
         // Update tech badge
         document.getElementById('mode-text').textContent = data.mode;
 
-        // Show/hide API notice
+        // Show/hide API notice (personalities stay enabled)
         const apiNotice = document.getElementById('api-notice');
         if (data.groq_valid) {
             apiNotice.classList.add('hidden');
@@ -57,17 +123,64 @@ async function updateUIForAPIKeys() {
     }
 }
 
-// Personality card selection
-document.querySelectorAll('.personality-card').forEach(card => {
-    card.addEventListener('click', () => {
-        // Remove active from all
-        document.querySelectorAll('.personality-card').forEach(c => c.classList.remove('active'));
-        // Add active to clicked
-        card.classList.add('active');
-        // Store selection
-        selectedPersonality = card.dataset.personality;
-    });
-});
+// Open voice settings for a personality
+function openVoiceSettings(personality) {
+    currentVoicePersonality = personality;
+
+    const modal = document.getElementById('voice-settings-modal');
+    const title = document.getElementById('voice-settings-title');
+    const edgeInput = document.getElementById('voice-edge');
+    const elevenInput = document.getElementById('voice-eleven');
+    const edgeDefault = document.getElementById('voice-edge-default');
+    const elevenDefault = document.getElementById('voice-eleven-default');
+
+    // Set title
+    const nameMatch = personality.name.match(/^(\S+)\s+(.+)$/);
+    const name = nameMatch ? nameMatch[2] : personality.name;
+    title.textContent = `Voice Settings - ${name}`;
+
+    // Load current overrides or show defaults
+    const overrides = voiceOverrides[personality.id] || {};
+    edgeInput.value = overrides.edge || '';
+    elevenInput.value = overrides.eleven || '';
+
+    // Show default voices from backend (we'll need to add these to the API response)
+    edgeDefault.textContent = `Default: Loading...`;
+    elevenDefault.textContent = `Default: Loading...`;
+
+    // Fetch default voices for this personality
+    fetch(`/api/personalities`)
+        .then(r => r.json())
+        .then(data => {
+            const p = data.personalities.find(x => x.id === personality.id);
+            if (p) {
+                edgeDefault.textContent = `Default: ${p.default_voice || 'None'}`;
+                elevenDefault.textContent = `Default: ${p.default_eleven_voice || 'None'}`;
+            }
+        });
+
+    modal.classList.add('active');
+}
+
+// Save voice settings
+function saveVoiceSettings() {
+    const edgeVoice = document.getElementById('voice-edge').value.trim();
+    const elevenVoice = document.getElementById('voice-eleven').value.trim();
+
+    if (!currentVoicePersonality) return;
+
+    // Save overrides (empty string means use default)
+    voiceOverrides[currentVoicePersonality.id] = {
+        edge: edgeVoice,
+        eleven: elevenVoice
+    };
+
+    localStorage.setItem('voiceOverrides', JSON.stringify(voiceOverrides));
+
+    // Close modal
+    document.getElementById('voice-settings-modal').classList.remove('active');
+    currentVoicePersonality = null;
+}
 
 // Settings modal
 const settingsModal = document.getElementById('settings-modal');
@@ -148,8 +261,12 @@ async function updateDisplay() {
         document.getElementById('current-streak').textContent = data.current_streak;
         document.getElementById('longest-streak').textContent = data.longest_streak;
 
-        // Update mode name
-        document.getElementById('mode-name').textContent = selectedPersonality.charAt(0).toUpperCase() + selectedPersonality.slice(1).replace('_', ' ');
+        // Update mode name - get the display name from the active personality card
+        const activeCard = document.querySelector('.personality-card.active');
+        if (activeCard) {
+            const displayName = activeCard.querySelector('.personality-name').textContent;
+            document.getElementById('mode-name').textContent = displayName;
+        }
 
         // Update tech info (only if monitoring, otherwise keep user's entered keys)
         if (data.is_monitoring) {
@@ -200,10 +317,11 @@ async function updateDisplay() {
 async function toggleMonitoring() {
     const groqKey = document.getElementById('groq-key').value;
     const elevenKey = document.getElementById('eleven-key').value;
-    const elevenVoice = document.getElementById('eleven-voice').value;
-    const edgeVoice = document.getElementById('edge-voice').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+
+    // Get voice override for selected personality
+    const voiceOverride = voiceOverrides[selectedPersonality] || {};
 
     try {
         await fetch('/api/toggle', {
@@ -212,8 +330,8 @@ async function toggleMonitoring() {
             body: JSON.stringify({
                 groq_key: groqKey,
                 eleven_key: elevenKey,
-                eleven_voice: elevenVoice,
-                edge_voice: edgeVoice,
+                eleven_voice: voiceOverride.eleven || '',
+                edge_voice: voiceOverride.edge || '',
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
@@ -247,10 +365,11 @@ async function resetStats() {
 async function testShame() {
     const groqKey = document.getElementById('groq-key').value;
     const elevenKey = document.getElementById('eleven-key').value;
-    const elevenVoice = document.getElementById('eleven-voice').value;
-    const edgeVoice = document.getElementById('edge-voice').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+
+    // Get voice override for selected personality
+    const voiceOverride = voiceOverrides[selectedPersonality] || {};
 
     try {
         await fetch('/api/test', {
@@ -259,8 +378,8 @@ async function testShame() {
             body: JSON.stringify({
                 groq_key: groqKey,
                 eleven_key: elevenKey,
-                eleven_voice: elevenVoice,
-                edge_voice: edgeVoice,
+                eleven_voice: voiceOverride.eleven || '',
+                edge_voice: voiceOverride.edge || '',
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
@@ -273,23 +392,75 @@ async function testShame() {
     }
 }
 
-// Update cooldown value display
-document.getElementById('cooldown').addEventListener('input', (e) => {
-    document.getElementById('cooldown-value').textContent = e.target.value;
-});
+// Update personality while monitoring is running
+async function updatePersonalityWhileRunning() {
+    const groqKey = document.getElementById('groq-key').value;
+    const elevenKey = document.getElementById('eleven-key').value;
+    const cooldown = document.getElementById('cooldown').value;
+    const praise = document.getElementById('praise-toggle').checked;
+    const voiceOverride = voiceOverrides[selectedPersonality] || {};
 
-// Button handlers
-document.getElementById('toggle-btn').addEventListener('click', toggleMonitoring);
-document.getElementById('test-btn').addEventListener('click', testShame);
-document.getElementById('reset-btn').addEventListener('click', resetStats);
+    try {
+        await fetch('/api/update-personality', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                groq_key: groqKey,
+                eleven_key: elevenKey,
+                eleven_voice: voiceOverride.eleven || '',
+                edge_voice: voiceOverride.edge || '',
+                cooldown: parseInt(cooldown),
+                praise: praise,
+                reset: false,
+                personality: selectedPersonality
+            })
+        });
+        console.log('Personality updated to:', selectedPersonality);
+    } catch (e) {
+        console.error('Failed to update personality:', e);
+    }
+}
 
-// Auto-update every 100ms for smooth video
-setInterval(() => {
-    updateVideo();
+// Initial update - wait for personalities to load first
+async function initialize() {
+    // Load personalities first
+    await loadPersonalities();
+
+    // Set up event listeners
+    document.getElementById('cooldown').addEventListener('input', (e) => {
+        document.getElementById('cooldown-value').textContent = e.target.value;
+    });
+
+    document.getElementById('toggle-btn').addEventListener('click', toggleMonitoring);
+    document.getElementById('test-btn').addEventListener('click', testShame);
+    document.getElementById('reset-btn').addEventListener('click', resetStats);
+
+    // Voice settings modal
+    document.getElementById('close-voice-settings').addEventListener('click', () => {
+        document.getElementById('voice-settings-modal').classList.remove('active');
+    });
+    document.getElementById('save-voice-settings').addEventListener('click', saveVoiceSettings);
+    document.getElementById('voice-settings-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'voice-settings-modal') {
+            e.target.classList.remove('active');
+        }
+    });
+
+    // Initial UI update
     updateDisplay();
-}, 100);
+    updateVideo();
+    updateUIForAPIKeys();
 
-// Initial update
-updateDisplay();
-updateVideo();
-updateUIForAPIKeys();
+    // Auto-update every 100ms for smooth video
+    setInterval(() => {
+        updateVideo();
+        updateDisplay();
+    }, 100);
+}
+
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+} else {
+    initialize();
+}

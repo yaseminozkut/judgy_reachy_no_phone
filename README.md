@@ -1,17 +1,4 @@
----
-title: Judgy Reachy No Phone
-emoji: 📱
-colorFrom: red
-colorTo: orange
-sdk: static
-pinned: false
-short_description: Get off your phone! Reachy Mini shames you with snarky comments
-tags:
- - reachy_mini
- - reachy_mini_python_app
----
-
-# 📱 Judgy Reachy No Phone 🤖
+# 📱 Judgy Reachy No Phone 🤖 - Feel free to shame yourself and others!
 
 **A Reachy Mini app that detects when you pick up your phone and shames you with snarky comments.**
 
@@ -19,7 +6,7 @@ Stop checking your phone and get back to work! This app uses computer vision to 
 
 ## Features
 
-- 📱 **Phone Detection**: Uses YOLOv8 to detect when you pick up your phone
+- 📱 **Phone Detection**: Uses YOLO26n to detect when you pick up your phone
 - 🗣️ **Snarky Responses**: LLM-generated or pre-written judgmental comments
 - 🔊 **Text-to-Speech**: Robot speaks the shame out loud with expressive voice
 - 🤖 **Expressive Animations**: Different reactions based on offense count
@@ -29,7 +16,7 @@ Stop checking your phone and get back to work! This app uses computer vision to 
 ## How It Works
 
 1. **Camera watches you** - Reachy Mini monitors the camera feed
-2. **Phone detected** - YOLOv8 detects when you pick up your phone
+2. **Phone detected** - YOLO26n detects when you pick up your phone
 3. **Shame delivered** - Robot gives you a snarky comment via TTS
 4. **Robot reacts** - Expressive animations get more dramatic with repeat offenses
 
@@ -46,13 +33,30 @@ Stop checking your phone and get back to work! This app uses computer vision to 
 
 | Component | Free Option | Premium Option |
 |-----------|-------------|----------------|
-| Detection | YOLOv8 (local) | - |
+| Detection | YOLO26n (local) | - |
 | LLM | Pre-written lines | Groq (free tier) |
 | TTS | Edge TTS (unlimited) | ElevenLabs (10k chars/month) |
 
+## Prerequisites
+
+Before installing this app, you need to set up Reachy Mini SDK:
+
+1. **Install Reachy Mini SDK**: Follow the installation guide at:
+   - [Reachy Mini Installation Guide](https://github.com/pollen-robotics/reachy_mini/blob/develop/docs/SDK/installation.md)
+   - [Reachy Mini Quickstart](https://github.com/pollen-robotics/reachy_mini/blob/develop/docs/SDK/quickstart.md)
+
+2. **Get the SDK**: Clone from [pollen-robotics/reachy_mini](https://github.com/pollen-robotics/reachy_mini)
+
 ## Installation
 
+Once Reachy Mini SDK is installed:
+
 ```bash
+# Clone this repository
+git clone https://github.com/yaseminozkut/judgy_reachy_no_phone
+cd judgy_reachy_no_phone
+
+# Install the app
 pip install .
 ```
 
@@ -72,22 +76,27 @@ pip install .[premium-tts]
 
 Get free API key at [elevenlabs.io](https://elevenlabs.io)
 
+### Install Everything
+
+```bash
+pip install .[llm,premium-tts]
+```
+
 ## Usage
 
-Run the app:
-```bash
-reachy-mini-daemon
-```
+### Start Reachy Mini Daemon
 
-Then install and start the app from the Reachy Mini dashboard, or run directly:
-```python
-from judgy_reachy_no_phone.main import JudgyReachyNoPhone
+Make sure your reachy-mini-daemon is running please check [Reachy Mini Quickstart](https://github.com/pollen-robotics/reachy_mini/blob/develop/docs/SDK/quickstart.md) to know how to run:
+- Simulation vs. Lite vs. Wireless
+- MacOS vs. Windows/Linux
 
-app = JudgyReachyNoPhone()
-app.wrapped_run()
-```
+### Launch the App
 
-The web UI will be available at http://localhost:7863
+The app will automatically detect if you're in simulation mode and use the appropriate camera:
+- **Simulation mode**: Uses your laptop webcam
+- **Real robot**: Uses robot's camera
+
+Access the web UI at **http://localhost:8042**
 
 ## Configuration
 
@@ -100,36 +109,33 @@ The web UI will be available at http://localhost:7863
 
 ### Pre-written Snarky Lines
 
-The app includes 20+ pre-written responses that work without any API:
-
-- **1st offense**: "The phone? Already?", "And so it begins."
-- **2nd-3rd**: "Again?", "Back to the phone I see."
-- **4+ offenses**: "I've lost count.", "Phone addiction is real."
+The app includes 20+ pre-written responses with personalities that work without any API.
 
 ## Stats Tracked
 
 - **Pickups Today**: Count of phone pickups in current session
-- **Total Shames**: Total number of shaming events
+- **Current Streak**: Current period without phone pickup
 - **Best Streak**: Longest period without phone pickup
 
 ## Technical Details
 
-- **Detection**: YOLOv8 nano model for fast inference
+- **Detection**: YOLO26 nano model for fast inference
 - **Phone Class ID**: COCO dataset class 67 ("cell phone")
+- **Camera Capture**: ~100 FPS max (0.01s sleep)
+- **Detection Rate**: Every 3rd frame (~33 FPS)
 - **Detection Threshold**: 3 consecutive frames to confirm pickup
 - **Putdown Threshold**: 15 frames to confirm phone down (avoids flicker)
-- **Frame Rate**: 5 Hz for efficient processing
 
 ## Requirements
 
 - Reachy Mini robot with camera
 - Python 3.10+
-- Internet connection (for first-time YOLO model download and TTS)
+- Internet connection (for first-time YOLO model download, LLM, and TTS)
 
 ## License
 
-MIT - Feel free to shame yourself and others!
+Apache 2.0
 
 ## Credits
 
-Built for [Reachy Mini](https://huggingface.co/spaces/pollen-robotics/Reachy_Mini) by Pollen Robotics & Hugging Face.
+Built by **Yasemin Ozkut** for [Reachy Mini](https://huggingface.co/spaces/pollen-robotics/Reachy_Mini) by Pollen Robotics & Hugging Face.

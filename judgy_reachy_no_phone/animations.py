@@ -76,12 +76,27 @@ def approving_nod(reachy: ReachyMini):
     reachy.goto_target(head=head, antennas=[0.1, 0.1], duration=0.3)
 
 
-def idle_breathing(reachy: ReachyMini):
-    """Gentle idle animation - kept short to avoid blocking events."""
+def idle_breathing(reachy: ReachyMini, should_stop=None):
+    """Gentle idle animation - can be interrupted by should_stop callback.
+
+    Args:
+        should_stop: Optional callback that returns True to interrupt animation
+    """
     reachy.goto_target(antennas=[0.15, 0.15], duration=0.8, method="minjerk")
-    time.sleep(0.8)
+
+    # Sleep in small chunks to allow interruption
+    for _ in range(16):  # 16 x 0.05 = 0.8s
+        if should_stop and should_stop():
+            return  # Exit immediately
+        time.sleep(0.05)
+
     reachy.goto_target(antennas=[0.05, 0.05], duration=0.8, method="minjerk")
-    time.sleep(0.8)
+
+    # Sleep in small chunks to allow interruption
+    for _ in range(16):  # 16 x 0.05 = 0.8s
+        if should_stop and should_stop():
+            return  # Exit immediately
+        time.sleep(0.05)
 
 
 def get_animation_for_count(count: int):

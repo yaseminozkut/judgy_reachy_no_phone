@@ -16,7 +16,7 @@ import cv2
 from reachy_mini import ReachyMini, ReachyMiniApp
 from pydantic import BaseModel
 
-from .config import Config
+from .config import Config, PERSONALITIES
 from .detection import PhoneDetector
 from .audio import LLMResponder, TextToSpeech
 from .animations import (
@@ -26,6 +26,7 @@ from .animations import (
     approving_nod,
     idle_breathing
 )
+from reachy_mini.motion.recorded_move import RecordedMoves
 
 logger = logging.getLogger(__name__)
 
@@ -43,11 +44,19 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
         # Components
         self.detector = PhoneDetector(confidence=self.config.DETECTION_CONFIDENCE)
-        self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY)
+        self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY, personality="pure_reachy")
+        # Don't pass config voice defaults - let personalities use their own defaults
         self.tts = TextToSpeech(
             elevenlabs_key=self.config.ELEVENLABS_API_KEY,
-            voice=self.config.EDGE_TTS_VOICE
+            personality="pure_reachy"
         )
+        # Load Reachy's emotion library for Pure Reachy mode
+        try:
+            self.emotions = RecordedMoves("pollen-robotics/reachy-mini-emotions-library")
+            logger.info("Loaded Reachy emotions library")
+        except Exception as e:
+            logger.warning(f"Failed to load emotions library: {e}")
+            self.emotions = None
 
         # State
         self.is_running = False
@@ -71,13 +80,36 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.camera_fps = 0
         self.detection_event_queue = []
 
+        # Register API endpoint for personalities (must be before server starts)
+        @self.settings_app.get("/api/personalities")
+        def get_personalities():
+            """Return list of available personalities from config."""
+            personalities_list = []
+            for key, data in PERSONALITIES.items():
+                # Handle both old (single voice) and new (voice list) format
+                eleven_voice_data = data.get("default_eleven_voices", data.get("default_eleven_voice", ""))
+                if isinstance(eleven_voice_data, list):
+                    # Show first voice in list as the default
+                    default_eleven = eleven_voice_data[0] if eleven_voice_data else ""
+                else:
+                    default_eleven = eleven_voice_data
+
+                personalities_list.append({
+                    "id": key,
+                    "name": data["name"],
+                    "voice": data["voice"],
+                    "default_voice": data.get("default_voice", ""),
+                    "default_eleven_voice": default_eleven
+                })
+            return {"personalities": personalities_list}
+
     def _camera_thread(self, webcam, stop_event: threading.Event):
-        """Fast camera capture and encoding thread."""
+        """Fast camera capture and encoding thread (for laptop webcam in simulation)."""
         fps_counter = 0
         fps_start = time.time()
         detection_skip = 0
 
-        logger.info("Camera thread started")
+        logger.info("Laptop camera thread started (simulation mode)")
 
         try:
             while not stop_event.is_set() and self.camera_running:
@@ -123,7 +155,61 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 time.sleep(0.01)  # ~100 FPS max
 
         finally:
-            logger.info("Camera thread stopped")
+            logger.info("Laptop camera thread stopped")
+
+    def _robot_camera_thread(self, reachy_mini: ReachyMini, stop_event: threading.Event):
+        """Camera thread using robot's media system (for real robot)."""
+        fps_counter = 0
+        fps_start = time.time()
+        detection_skip = 0
+
+        logger.info("Robot camera thread started")
+
+        try:
+            while not stop_event.is_set() and self.camera_running:
+                frame = reachy_mini.media.get_frame()
+                if frame is None:
+                    time.sleep(0.01)
+                    continue
+
+                # Store frame for detection
+                self.latest_frame = frame.copy()
+
+                # Calculate FPS
+                fps_counter += 1
+                if time.time() - fps_start >= 1.0:
+                    self.camera_fps = fps_counter
+                    fps_counter = 0
+                    fps_start = time.time()
+
+                # Run detection every 3rd frame
+                if self.is_monitoring and (detection_skip % 3 == 0):
+                    try:
+                        event = self.detector.process_frame(
+                            frame,
+                            pickup_threshold=self.config.PICKUP_THRESHOLD,
+                            putdown_threshold=self.config.PUTDOWN_THRESHOLD,
+                            cooldown=self.config.COOLDOWN_SECONDS
+                        )
+                        # Store event for main thread to handle
+                        if event:
+                            self.detection_event_queue.append(event)
+                    except Exception as e:
+                        logger.error(f"Detection error: {e}")
+
+                detection_skip += 1
+
+                # Draw detection boxes only (no text overlays)
+                frame_with_boxes = self.detector.draw_detections(frame)
+
+                # Encode as JPEG for web display
+                _, buffer = cv2.imencode('.jpg', frame_with_boxes, [cv2.IMWRITE_JPEG_QUALITY, 85])
+                self.latest_frame_jpeg = base64.b64encode(buffer).decode('utf-8')
+
+                time.sleep(0.01)  # ~100 FPS max
+
+        finally:
+            logger.info("Robot camera thread stopped")
 
     def run(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         """Main loop."""
@@ -139,17 +225,18 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         # Initialize detector
         self.detector.initialize()
 
-        # For testing: Use Mac webcam instead of robot camera
-        USE_WEBCAM = True  # Set to False to use robot camera
+        # Auto-detect: Use laptop webcam in simulation, robot camera otherwise
+        is_simulation = reachy_mini.client.get_status()["simulation_enabled"]
         webcam = None
-        if USE_WEBCAM:
-            logger.info("Opening Mac webcam for testing...")
+
+        if is_simulation:
+            logger.info("Simulation mode detected - using laptop webcam...")
             webcam = cv2.VideoCapture(0)
             if not webcam.isOpened():
-                logger.error("Failed to open webcam!")
+                logger.error("Failed to open laptop webcam!")
                 webcam = None
             else:
-                logger.info("Webcam opened successfully!")
+                logger.info("Laptop webcam opened successfully!")
                 self.camera_running = True
 
                 # Start fast camera thread
@@ -159,6 +246,17 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     daemon=True
                 )
                 camera_thread.start()
+        else:
+            logger.info("Real robot detected - using robot camera...")
+            self.camera_running = True
+
+            # Start camera thread with robot's media system
+            camera_thread = threading.Thread(
+                target=self._robot_camera_thread,
+                args=(reachy_mini, stop_event),
+                daemon=True
+            )
+            camera_thread.start()
 
         # Detection and robot control loop (separate from camera display)
         breath_counter = 0
@@ -189,7 +287,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     # Only do idle breathing if no events pending (to avoid blocking)
                     if self.is_monitoring and not self.detector.phone_visible and len(self.detection_event_queue) == 0:
                         try:
-                            idle_breathing(reachy_mini)
+                            # Pass callback to check for events during breathing
+                            idle_breathing(reachy_mini, should_stop=lambda: len(self.detection_event_queue) > 0)
                         except:
                             pass
 
@@ -220,29 +319,42 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
         logger.info(f"Phone pickup #{count}!")
 
-        # Get snarky response
-        text = self.llm.get_response(count)
-        logger.info(f"Response: {text}")
+        # Check if using Pure Reachy mode (no TTS, just emotions)
+        if self.llm.personality == "pure_reachy" and self.emotions:
+            # Randomly pick a shame emotion from the config list
+            import random
+            personality_data = PERSONALITIES["pure_reachy"]
+            shame_emotions = personality_data.get("shame_emotions", ["reprimand1"])
+            emotion_name = random.choice(shame_emotions)
+            emotion = self.emotions.get(emotion_name)
+            logger.info(f"Pure Reachy shame: {emotion_name}")
 
-        # Generate and play audio
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            audio_path = loop.run_until_complete(self.tts.synthesize(text))
-            loop.close()
+            # Play emotion (includes sound + animation automatically)
+            reachy.play_move(emotion)
+        else:
+            # Normal mode: Get snarky response via TTS
+            text = self.llm.get_response(count)
+            logger.info(f"Response: {text}")
 
-            # Play audio
-            reachy.media.play_sound(audio_path)
+            # Generate and play audio
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                audio_path = loop.run_until_complete(self.tts.synthesize(text))
+                loop.close()
 
-            # Animate based on offense count
-            animation = get_animation_for_count(count)
-            animation(reachy)
+                # Play audio
+                reachy.media.play_sound(audio_path)
 
-        except Exception as e:
-            logger.error(f"Shame response error: {e}")
-            # Fallback: just animate
-            play_sound_safe(reachy, "confused1.wav")
-            disappointed_shake(reachy)
+                # Animate based on offense count
+                animation = get_animation_for_count(count)
+                animation(reachy)
+
+            except Exception as e:
+                logger.error(f"Shame response error: {e}")
+                # Fallback: just animate
+                play_sound_safe(reachy, "confused1.wav")
+                disappointed_shake(reachy)
 
     def _handle_phone_putdown(self, reachy: ReachyMini):
         """Handle phone put down event."""
@@ -251,23 +363,36 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         # Start new streak
         self.current_streak_start = time.time()
 
-        # Get praise
-        text = self.llm.get_praise()
-        logger.info(f"Praise: {text}")
+        # Check if using Pure Reachy mode (no TTS, just emotions)
+        if self.llm.personality == "pure_reachy" and self.emotions:
+            # Randomly pick a praise emotion from the config list
+            import random
+            personality_data = PERSONALITIES["pure_reachy"]
+            praise_emotions = personality_data.get("praise_emotions", ["yes1"])
+            emotion_name = random.choice(praise_emotions)
+            emotion = self.emotions.get(emotion_name)
+            logger.info(f"Pure Reachy praise: {emotion_name}")
 
-        try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            audio_path = loop.run_until_complete(self.tts.synthesize(text))
-            loop.close()
+            # Play emotion (includes sound + animation automatically)
+            reachy.play_move(emotion)
+        else:
+            # Normal mode: Get praise via TTS
+            text = self.llm.get_praise()
+            logger.info(f"Praise: {text}")
 
-            reachy.media.play_sound(audio_path)
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                audio_path = loop.run_until_complete(self.tts.synthesize(text))
+                loop.close()
 
-            approving_nod(reachy)
+                reachy.media.play_sound(audio_path)
 
-        except Exception as e:
-            logger.debug(f"Praise error: {e}")
-            approving_nod(reachy)
+                approving_nod(reachy)
+
+            except Exception as e:
+                logger.debug(f"Praise error: {e}")
+                approving_nod(reachy)
 
     def _run_ui(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         """Setup FastAPI routes for the UI."""
@@ -281,7 +406,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             cooldown: int = 30
             praise: bool = True
             reset: bool = False  # If True, reset all stats (Start Fresh)
-            personality: str = "mixtape"  # Robot personality
+            personality: str = "pure_reachy"  # Robot personality
 
         # API endpoint: Get video frame
         @self.settings_app.get("/api/video-frame")
@@ -315,7 +440,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             else:
                 status_text = "✅ Phone-free"
 
-            mode_text = f"YOLO | {'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
+            mode_text = f"YOLO26n | {'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
 
             # Determine button text
             if self.is_monitoring:
@@ -356,22 +481,29 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 return {"button_text": button_text}
             else:
                 # Start or Continue monitoring
+                # Always update LLM responder with personality (for prewritten lines even without API key)
                 if req.groq_key:
                     logger.info(f"Initializing LLM with Groq API key: {req.groq_key[:10]}... personality: {req.personality}")
                     self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
                 else:
-                    logger.info("No Groq API key provided, using pre-written lines")
+                    logger.info(f"No Groq API key provided, using pre-written lines with personality: {req.personality}")
+                    self.llm = LLMResponder(api_key="", personality=req.personality)
 
-                # Initialize TTS with custom voices if provided
-                eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
-                edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
-
+                # Initialize TTS - pass custom voices only if explicitly set (empty string means use personality default)
                 if req.eleven_key:
-                    logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}... voice: {eleven_voice}")
-                    self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice)
+                    logger.info(f"Initializing TTS with ElevenLabs key: {req.eleven_key[:10]}...")
+                    self.tts = TextToSpeech(
+                        elevenlabs_key=req.eleven_key,
+                        voice=req.edge_voice,  # Pass empty string if not set, let personality defaults handle it
+                        eleven_voice_id=req.eleven_voice,
+                        personality=req.personality
+                    )
                 else:
-                    logger.info(f"No ElevenLabs key provided, using Edge TTS with voice: {edge_voice}")
-                    self.tts = TextToSpeech(voice=edge_voice)
+                    logger.info(f"No ElevenLabs key provided, using Edge TTS")
+                    self.tts = TextToSpeech(
+                        voice=req.edge_voice,  # Pass empty string if not set, let personality defaults handle it
+                        personality=req.personality
+                    )
 
                 self.config.COOLDOWN_SECONDS = req.cooldown
                 self.praise_enabled = req.praise
@@ -427,49 +559,70 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
             # Test ElevenLabs
             if req.eleven_key:
-                eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
                 try:
                     from elevenlabs import ElevenLabs
                     test_eleven = ElevenLabs(api_key=req.eleven_key)
+                    result["eleven_valid"] = True
+                    logger.info("ElevenLabs API key validated")
 
-                    # Test voice ID with small synthesis
-                    try:
-                        audio_gen = test_eleven.text_to_speech.convert(
-                            text="test",
-                            voice_id=eleven_voice,
-                            model_id="eleven_multilingual_v2"
-                        )
-                        # Consume generator to trigger any errors
-                        for _ in audio_gen:
-                            break
-                        result["eleven_valid"] = True
+                    # Only validate voice ID if user entered a custom one
+                    if req.eleven_voice:
+                        try:
+                            audio_gen = test_eleven.text_to_speech.convert(
+                                text="test",
+                                voice_id=req.eleven_voice,
+                                model_id="eleven_multilingual_v2"
+                            )
+                            # Consume generator to trigger any errors
+                            for _ in audio_gen:
+                                break
+                            result["eleven_voice_valid"] = True
+                            logger.info(f"ElevenLabs voice validated: {req.eleven_voice}")
+                        except Exception as voice_error:
+                            result["eleven_voice_valid"] = False
+                            logger.warning(f"ElevenLabs voice validation failed: {voice_error}")
+                            result["errors"].append(f"ElevenLabs voice '{req.eleven_voice}': Invalid or no access")
+                    else:
+                        # No custom voice entered, will use config default
                         result["eleven_voice_valid"] = True
-                        logger.info(f"ElevenLabs validated with voice: {eleven_voice}")
-                    except Exception as voice_error:
-                        result["eleven_valid"] = True  # Key is valid
-                        result["eleven_voice_valid"] = False  # But voice is not
-                        logger.warning(f"ElevenLabs voice validation failed: {voice_error}")
-                        result["errors"].append(f"ElevenLabs voice '{eleven_voice}': Invalid or no access")
+                        logger.info(f"No custom ElevenLabs voice, using default: {self.config.ELEVENLABS_VOICE_ID}")
+
                 except Exception as e:
                     logger.warning(f"ElevenLabs API key validation failed: {e}")
                     result["errors"].append(f"ElevenLabs key: {str(e)}")
 
-            # Test Edge TTS voice
-            edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
-            try:
-                import edge_tts
-                # Try to get voice info
-                asyncio.run(edge_tts.VoicesManager.create().find_voice(edge_voice))
+            # Test Edge TTS voice (only if user entered one)
+            if req.edge_voice:
+                try:
+                    import edge_tts
+                    # Validate by trying to create a Communicate object
+                    async def validate_edge_voice():
+                        try:
+                            communicate = edge_tts.Communicate("test", req.edge_voice)
+                            # If no error thrown, voice is valid
+                            return True
+                        except Exception:
+                            return False
+
+                    voice_valid = asyncio.run(validate_edge_voice())
+                    if voice_valid:
+                        result["edge_voice_valid"] = True
+                        logger.info(f"Edge TTS voice validated: {req.edge_voice}")
+                    else:
+                        result["errors"].append(f"Edge TTS voice '{req.edge_voice}': Not found")
+                        logger.warning(f"Edge TTS voice not found: {req.edge_voice}")
+                except Exception as e:
+                    logger.warning(f"Edge TTS validation error: {e}")
+                    # Don't block on validation errors
+                    result["edge_voice_valid"] = True
+            else:
+                # No custom voice entered, skip validation
                 result["edge_voice_valid"] = True
-                logger.info(f"Edge TTS voice validated: {edge_voice}")
-            except Exception as e:
-                logger.warning(f"Edge TTS voice validation failed: {e}")
-                result["errors"].append(f"Edge TTS voice '{edge_voice}': Not found")
 
             # Build mode string
             llm_text = "LLM + TTS" if result["groq_valid"] else "Pre-written lines"
             tts_text = "ElevenLabs" if result["eleven_valid"] else "Edge TTS"
-            result["mode"] = f"YOLO | {llm_text} → {tts_text}"
+            result["mode"] = f"YOLO26n | {llm_text} → {tts_text}"
 
             return result
 
@@ -493,41 +646,96 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         @self.settings_app.post("/api/test")
         def test_shame(req: ToggleRequest):
             # Apply settings from UI before testing (but don't start monitoring)
+            # Always update LLM responder with personality (for prewritten lines even without API key)
             if req.groq_key:
                 self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
-
-            eleven_voice = req.eleven_voice if req.eleven_voice else "H10ItvDnkRN5ysrvzT9J"
-            edge_voice = req.edge_voice if req.edge_voice else "en-US-AnaNeural"
-
-            if req.eleven_key:
-                self.tts = TextToSpeech(elevenlabs_key=req.eleven_key, voice=edge_voice, eleven_voice_id=eleven_voice)
             else:
-                self.tts = TextToSpeech(voice=edge_voice)
+                self.llm = LLMResponder(api_key="", personality=req.personality)
+
+            # Pass voice overrides only if explicitly set (empty string means use personality default)
+            if req.eleven_key:
+                self.tts = TextToSpeech(
+                    elevenlabs_key=req.eleven_key,
+                    voice=req.edge_voice,
+                    eleven_voice_id=req.eleven_voice,
+                    personality=req.personality
+                )
+            else:
+                self.tts = TextToSpeech(
+                    voice=req.edge_voice,
+                    personality=req.personality
+                )
 
             # Run test without starting monitoring
             self.detector.phone_count += 1
             self.total_shames += 1
 
-            # Get response
-            text = self.llm.get_response(self.detector.phone_count)
-            logger.info(f"Test response: {text}")
+            # Check if using Pure Reachy mode (no TTS, just emotions)
+            if req.personality == "pure_reachy" and self.emotions:
+                # Randomly pick a shame emotion from the config list
+                import random
+                personality_data = PERSONALITIES["pure_reachy"]
+                shame_emotions = personality_data.get("shame_emotions", ["curious1"])
+                emotion_name = random.choice(shame_emotions)
+                emotion = self.emotions.get(emotion_name)
+                logger.info(f"Pure Reachy test: {emotion_name}")
 
-            # Play audio and animate
-            try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                audio_path = loop.run_until_complete(self.tts.synthesize(text))
-                loop.close()
+                reachy_mini.play_move(emotion)
+            else:
+                # Normal mode: Get response via TTS
+                text = self.llm.get_response(self.detector.phone_count)
+                logger.info(f"Test response: {text}")
 
-                reachy_mini.media.play_sound(audio_path)
-                animation = get_animation_for_count(self.detector.phone_count)
-                animation(reachy_mini)
-            except Exception as e:
-                logger.error(f"Test error: {e}")
-                play_sound_safe(reachy_mini, "confused1.wav")
-                disappointed_shake(reachy_mini)
+                # Play audio and animate
+                try:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    audio_path = loop.run_until_complete(self.tts.synthesize(text))
+                    loop.close()
+
+                    reachy_mini.media.play_sound(audio_path)
+                    animation = get_animation_for_count(self.detector.phone_count)
+                    animation(reachy_mini)
+                except Exception as e:
+                    logger.error(f"Test error: {e}")
+                    play_sound_safe(reachy_mini, "confused1.wav")
+                    disappointed_shake(reachy_mini)
 
             return {"success": True}
+
+        # API endpoint: Update personality while monitoring
+        @self.settings_app.post("/api/update-personality")
+        def update_personality(req: ToggleRequest):
+            """Update personality, voice, and API keys while monitoring is running."""
+            # Update LLM with new personality
+            if req.groq_key:
+                self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
+                logger.info(f"Updated LLM: personality={req.personality}, groq_key={'SET' if req.groq_key else 'NONE'}")
+            else:
+                self.llm = LLMResponder(api_key="", personality=req.personality)
+                logger.info(f"Updated LLM: personality={req.personality}, using prewritten lines")
+
+            # Update TTS with new personality and voices
+            if req.eleven_key:
+                self.tts = TextToSpeech(
+                    elevenlabs_key=req.eleven_key,
+                    voice=req.edge_voice,
+                    eleven_voice_id=req.eleven_voice,
+                    personality=req.personality
+                )
+                logger.info(f"Updated TTS: personality={req.personality}, ElevenLabs enabled")
+            else:
+                self.tts = TextToSpeech(
+                    voice=req.edge_voice,
+                    personality=req.personality
+                )
+                logger.info(f"Updated TTS: personality={req.personality}, Edge TTS only")
+
+            # Update other settings
+            self.config.COOLDOWN_SECONDS = req.cooldown
+            self.praise_enabled = req.praise
+
+            return {"success": True, "message": f"Updated to {req.personality}"}
 
         # Keep thread alive
         while not stop_event.is_set():

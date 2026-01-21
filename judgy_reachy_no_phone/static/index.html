@@ -96,76 +96,15 @@
 
                 <!-- API Key Notice -->
                 <div class="api-notice" id="api-notice">
-                    <div class="notice-icon">⚠️</div>
+                    <div class="notice-icon">💡</div>
                     <div class="notice-text">
-                        <strong>Groq API Key Required</strong><br>
-                        <span class="notice-small">Add key in settings to enable personalities</span>
+                        <strong>Using Pre-written Lines</strong><br>
+                        <span class="notice-small">Add Groq API key in settings for AI-powered responses</span>
                     </div>
                 </div>
 
-                <div class="personality-list">
-                    <div class="personality-card active" data-personality="mixtape">
-                        <div class="personality-emoji">🎵</div>
-                        <div class="personality-info">
-                            <div class="personality-name">Mixtape</div>
-                            <div class="personality-desc">Random Mix</div>
-                        </div>
-                        <div class="personality-check">✓</div>
-                    </div>
-
-                    <div class="personality-card" data-personality="angry_boss">
-                        <div class="personality-emoji">😠</div>
-                        <div class="personality-info">
-                            <div class="personality-name">Angry Boss</div>
-                            <div class="personality-desc">Stern & demanding</div>
-                        </div>
-                        <div class="personality-check">✓</div>
-                    </div>
-
-                    <div class="personality-card" data-personality="sarcastic">
-                        <div class="personality-emoji">🎭</div>
-                        <div class="personality-info">
-                            <div class="personality-name">Sarcastic</div>
-                            <div class="personality-desc">Witty & ironic</div>
-                        </div>
-                        <div class="personality-check">✓</div>
-                    </div>
-
-                    <div class="personality-card" data-personality="disappointed_parent">
-                        <div class="personality-emoji">😔</div>
-                        <div class="personality-info">
-                            <div class="personality-name">Disappointed Parent</div>
-                            <div class="personality-desc">Guilt-tripping</div>
-                        </div>
-                        <div class="personality-check">✓</div>
-                    </div>
-
-                    <div class="personality-card" data-personality="motivational_coach">
-                        <div class="personality-emoji">💪</div>
-                        <div class="personality-info">
-                            <div class="personality-name">Motivational Coach</div>
-                            <div class="personality-desc">Encouraging</div>
-                        </div>
-                        <div class="personality-check">✓</div>
-                    </div>
-
-                    <div class="personality-card" data-personality="funny">
-                        <div class="personality-emoji">🤡</div>
-                        <div class="personality-info">
-                            <div class="personality-name">Funny/Silly</div>
-                            <div class="personality-desc">Playful & goofy</div>
-                        </div>
-                        <div class="personality-check">✓</div>
-                    </div>
-
-                    <div class="personality-card" data-personality="professional">
-                        <div class="personality-emoji">🎩</div>
-                        <div class="personality-info">
-                            <div class="personality-name">Professional</div>
-                            <div class="personality-desc">Formal & polite</div>
-                        </div>
-                        <div class="personality-check">✓</div>
-                    </div>
+                <div class="personality-list" id="personality-list">
+                    <!-- Personalities loaded dynamically from config -->
                 </div>
             </div>
         </div>
@@ -188,16 +127,6 @@
                     <input type="password" id="eleven-key" placeholder="Get free at elevenlabs.io">
                 </div>
                 <div class="form-group">
-                    <label for="eleven-voice">ElevenLabs Voice ID (optional)</label>
-                    <input type="text" id="eleven-voice" placeholder="H10ItvDnkRN5ysrvzT9J">
-                    <small class="input-hint">Leave empty to use default</small>
-                </div>
-                <div class="form-group">
-                    <label for="edge-voice">Edge TTS Voice (optional)</label>
-                    <input type="text" id="edge-voice" placeholder="en-US-AnaNeural">
-                    <small class="input-hint">Leave empty to use default</small>
-                </div>
-                <div class="form-group">
                     <label for="cooldown">Cooldown between shames (seconds): <span id="cooldown-value">10</span></label>
                     <input type="range" id="cooldown" min="10" max="120" value="10" step="5">
                 </div>
@@ -210,6 +139,31 @@
             </div>
             <div class="settings-footer">
                 <button class="btn btn-done" id="done-settings">✓ Done</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Settings Modal -->
+    <div class="settings-modal" id="voice-settings-modal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2 id="voice-settings-title">Voice Settings</h2>
+                <button class="close-btn" id="close-voice-settings">✕</button>
+            </div>
+            <div class="settings-body">
+                <div class="form-group">
+                    <label for="voice-edge">Edge TTS Voice (free)</label>
+                    <input type="text" id="voice-edge" placeholder="Leave empty for default">
+                    <small class="input-hint" id="voice-edge-default"></small>
+                </div>
+                <div class="form-group">
+                    <label for="voice-eleven">ElevenLabs Voice ID</label>
+                    <input type="text" id="voice-eleven" placeholder="Leave empty for default">
+                    <small class="input-hint" id="voice-eleven-default"></small>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <button class="btn btn-done" id="save-voice-settings">✓ Save</button>
             </div>
         </div>
     </div>
