@@ -1001,6 +1001,10 @@ section {
 		grid-template-columns: 1fr;
 	}
 
+	.api-link-inline {
+		display: none;
+	}
+
 	.steps-flow {
 		grid-template-columns: 1fr;
 	}
