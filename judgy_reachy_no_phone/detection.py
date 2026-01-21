@@ -40,10 +40,21 @@ class PhoneDetector:
             return True
 
         try:
+            import torch
             from ultralytics import YOLO
-            self.yolo_model = YOLO("yolo26n.pt")
+
+            # Auto-detect best device (supports CUDA, MPS, and CPU)
+            if torch.cuda.is_available():
+                device = 'cuda'  # NVIDIA GPU
+            elif torch.backends.mps.is_available():
+                device = 'mps'   # Apple Silicon GPU
+            else:
+                device = 'cpu'   # Fallback to CPU
+
+            # Use pretrained YOLO26n model
+            self.yolo_model = YOLO("yolo26n.pt").to(device)
             self._initialized = True
-            logger.info("YOLO model loaded")
+            logger.info(f"YOLO model loaded on {device.upper()}")
             return True
         except Exception as e:
             logger.error(f"Failed to load YOLO: {e}")
@@ -79,6 +90,7 @@ class PhoneDetector:
             for result in self.last_detections:
                 for box in result.boxes:
                     cls = int(box.cls)
+
                     # Only draw phones
                     if cls != self.PHONE_CLASS_ID:
                         continue
@@ -86,9 +98,12 @@ class PhoneDetector:
                     conf = float(box.conf)
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
 
+                    # Get class name from model
+                    class_name = self.yolo_model.names[cls] if self.yolo_model else "phone"
+
                     # Draw green box for phone
                     cv2.rectangle(frame_with_boxes, (x1, y1), (x2, y2), (0, 255, 0), 3)
-                    text = f"cell phone {conf:.2f}"
+                    text = f"{class_name} {conf:.2f}"
                     cv2.putText(frame_with_boxes, text, (x1, y1 - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         except Exception as e:
