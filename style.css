@@ -46,7 +46,7 @@ body {
 .container {
 	max-width: 1200px;
 	margin: 0 auto;
-	padding: 0 2rem;
+	padding: 0 1rem;
 }
 
 /* Decorative Background */
@@ -162,7 +162,7 @@ body::after {
 
 /* Hero Section */
 .hero-section {
-	padding: 3rem 0 5rem;
+	padding: 3rem 0 3rem;
 	position: relative;
 }
 
@@ -170,7 +170,7 @@ body::after {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 3rem;
-	align-items: center;
+	align-items: start;
 }
 
 .hero-left {
@@ -179,8 +179,9 @@ body::after {
 
 .hero-right {
 	display: flex;
-	align-items: center;
-	justify-content: center;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 1.5rem;
 }
 
 .hero-label {
@@ -224,7 +225,7 @@ body::after {
 }
 
 .hero-description {
-	font-size: 1.25rem;
+	font-size: 1.1rem;
 	line-height: 1.7;
 	color: var(--text-body);
 	max-width: 600px;
@@ -239,7 +240,7 @@ body::after {
 }
 
 .tag {
-	padding: 0.6rem 1.25rem;
+	padding: 0.5rem 0.5rem;
 	background: var(--bg-card);
 	border: 2px solid var(--border-soft);
 	border-radius: 100px;
@@ -278,7 +279,7 @@ body::after {
 }
 
 .tech-pill {
-	padding: 0.5rem 1rem;
+	padding: 0.5rem 0.5rem;
 	background: linear-gradient(135deg, rgba(255, 107, 74, 0.1), rgba(155, 126, 232, 0.08));
 	border: 1px solid rgba(255, 107, 74, 0.3);
 	border-radius: 100px;
@@ -296,7 +297,7 @@ body::after {
 
 /* Section Styles */
 section {
-	padding: 5rem 0;
+	padding: 3rem 0;
 }
 
 .section-label {
