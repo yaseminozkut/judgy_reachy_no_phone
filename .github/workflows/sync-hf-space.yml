@@ -1,0 +1,24 @@
+name: Sync to Hugging Face Space
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: hf-sync-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Sync with Hugging Face Space
+        uses: yaseminozkut/huggingface-sync-action@main
+        with:
+          github_repo_id: yaseminozkut/judgy_reachy_no_phone
+          huggingface_repo_id: yozkut/judgy_reachy_no_phone
+          hf_token: ${{ secrets.HF_TOKEN }}
+          repo_type: space
+          space_sdk: static
