@@ -18,7 +18,7 @@ dependencies = [
     "edge-tts",
     "pydantic"
 ]
-keywords = ["reachy-mini-app"]
+keywords = ["reachy-mini-app", "productivity"]
 
 [project.optional-dependencies]
 llm = ["groq"]

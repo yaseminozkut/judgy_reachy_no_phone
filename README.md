@@ -6,10 +6,11 @@ colorTo: purple
 sdk: static
 pinned: false
 license: apache-2.0
-short_description: Get off your phone! AI vision catches you scrolling and delivers snarky robot shame.
+short_description: Robot shames you for phone addiction with AI vision
 tags:
  - reachy_mini
  - reachy_mini_python_app
+ - productivity
 ---
 
 # 📱 Judgy Reachy No Phone 🤖 - Feel free to shame yourself and others!
