@@ -14,6 +14,9 @@ jobs:
     timeout-minutes: 5
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Sync with Hugging Face Space
         uses: yaseminozkut/huggingface-sync-action@main
         with:
