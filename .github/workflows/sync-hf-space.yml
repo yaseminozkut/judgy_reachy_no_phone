@@ -17,8 +17,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Checkout huggingface-sync-action fork
+        uses: actions/checkout@v4
+        with:
+          repository: yaseminozkut/huggingface-sync-action
+          path: .github/actions/huggingface-sync-action
+
       - name: Sync with Hugging Face Space
-        uses: yaseminozkut/huggingface-sync-action@main
+        uses: ./.github/actions/huggingface-sync-action
         with:
           github_repo_id: yaseminozkut/judgy_reachy_no_phone
           huggingface_repo_id: yozkut/judgy_reachy_no_phone
