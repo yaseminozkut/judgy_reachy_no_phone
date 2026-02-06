@@ -435,6 +435,23 @@ async function initialize() {
     document.getElementById('test-btn').addEventListener('click', testShame);
     document.getElementById('reset-btn').addEventListener('click', resetStats);
 
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.dataset.tab;
+
+            // Update active button
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update active tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+        });
+    });
+
     // Voice settings modal
     document.getElementById('close-voice-settings').addEventListener('click', () => {
         document.getElementById('voice-settings-modal').classList.remove('active');

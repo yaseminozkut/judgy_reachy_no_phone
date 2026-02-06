@@ -22,6 +22,18 @@
         <button class="settings-btn" id="settings-btn">⚙️</button>
     </header>
 
+    <!-- Tab Navigation -->
+    <div class="tab-nav">
+        <button class="tab-btn active" data-tab="phone-monitor">
+            📱 Phone Monitor
+        </button>
+        <button class="tab-btn" data-tab="household-inspector">
+            🏠 Household Inspector
+        </button>
+    </div>
+
+    <!-- Tab: Phone Monitor -->
+    <div class="tab-content active" id="tab-phone-monitor">
     <!-- Main Container -->
     <div class="main-container">
         <!-- Left Column -->
@@ -142,6 +154,20 @@
             </div>
         </div>
     </div>
+
+    </div>
+    <!-- End Tab: Phone Monitor -->
+
+    <!-- Tab: Household Inspector -->
+    <div class="tab-content" id="tab-household-inspector">
+        <div class="placeholder-container">
+            <div class="placeholder-icon">🏠</div>
+            <h2 class="placeholder-title">Household Inspector</h2>
+            <p class="placeholder-text">Coming Soon</p>
+            <p class="placeholder-subtitle">Reachy will scan your room and judge your cleanliness!</p>
+        </div>
+    </div>
+    <!-- End Tab: Household Inspector -->
 
     <!-- Voice Settings Modal -->
     <div class="settings-modal" id="voice-settings-modal">

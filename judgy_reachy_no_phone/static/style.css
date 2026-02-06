@@ -729,6 +729,83 @@ body {
     50% { opacity: 0.5; }
 }
 
+/* Tab Navigation */
+.tab-nav {
+    display: flex;
+    gap: 8px;
+    padding: 0 40px;
+    background: rgba(15, 15, 15, 0.6);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    padding: 14px 24px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.tab-btn:hover {
+    color: #e5e7eb;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.tab-btn.active {
+    color: #06b6d4;
+    border-bottom-color: #06b6d4;
+}
+
+/* Tab Content */
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Placeholder for Household Inspector */
+.placeholder-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    text-align: center;
+    padding: 40px;
+}
+
+.placeholder-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.placeholder-title {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #e5e7eb;
+}
+
+.placeholder-text {
+    font-size: 20px;
+    color: #06b6d4;
+    margin-bottom: 8px;
+}
+
+.placeholder-subtitle {
+    font-size: 14px;
+    color: #9ca3af;
+    max-width: 500px;
+}
+
 /* Responsive */
 @media (max-width: 1200px) {
     .main-container {
