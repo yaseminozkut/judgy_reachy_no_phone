@@ -20,6 +20,7 @@
 			</div>
 
 			<nav class="nav">
+				<a href="#demo" class="nav-link">Try Demo</a>
 				<a href="#setup" class="nav-link">Quick Setup</a>
 				<a href="#config" class="nav-link">Config</a>
 				<a href="#personalities" class="nav-link">Personalities</a>
@@ -41,26 +42,17 @@
 			<div class="hero-grid">
 				<div class="hero-left">
 					<div class="hero-label">Reachy Mini App</div>
-					<h1 class="hero-title">Get off<br><span>your phone!</span></h1>
+					<h1 class="hero-title">Get off <span>your phone!</span></h1>
 					<p class="hero-description">
-						Your robot companion uses AI vision to catch you scrolling and shame you back to productivity with brutal and funny comments. Pure chaos, pure fun.
+						Your robot companion catches you scrolling with AI vision. Shames you back to productivity. Brutal, funny, pure chaos.
 					</p>
 					<div class="hero-tags">
 						<span class="tag">⚡ Real-time Detection</span>
 						<span class="tag">👾 LLM</span>
 						<span class="tag">🔈 TTS</span>
 						<span class="tag">😌 9 Personalities</span>
-						<span class="tag">⚙️ Customizable</span>
-						<span class="tag">🔒 100% Local Mode or API</span>
+						<span class="tag">🔒 100% Local or API</span>
 					</div>
-
-				</div>
-
-				<div class="hero-right">
-					<div style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-top: 5rem;">
-						<img src="quick_demo.gif" alt="Judgy Reachy demo - phone detection in action" style="width: 100%; display: block;">
-					</div>
-
 					<div class="hero-tech" style="margin-top: 1.5rem;">
 						<div class="hero-tech-stack">
 							<span class="tech-pill">YOLO26n</span>
@@ -69,6 +61,84 @@
 							<span class="tech-pill">Edge TTS</span>
 							<span class="tech-pill">ElevenLabs</span>
 						</div>
+					</div>
+
+					<div class="hero-cta">
+						<a href="#demo" class="cta-button">🎮 Try Demo in Browser</a>
+						<a href="#setup" class="cta-button-secondary">📥 Download for Robot</a>
+					</div>
+
+				</div>
+
+				<div class="hero-right">
+					<div style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-top: 5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+						<img src="quick_demo.gif" alt="Judgy Reachy demo - phone detection in action" style="width: 100%; display: block;">
+					</div>
+
+				</div>
+			</div>
+
+		</div>
+	</section>
+
+	<!-- Try Demo Section -->
+	<section id="demo" class="demo-section">
+		<div class="container">
+			<h2 class="section-title">Interactive Teaser Browser Demo</h2>
+			<p class="section-subtitle">Just a quick teaser demo! If you haven't tried Reachy Mini yet, this is a fun way to get a taste of what it can do. Hope it makes you smile :) and sparks your curiosity to try the full real simulation/robot. For the complete experience with expressive robot animations, head movements, and all 9 personalities, download this app to your Reachy Mini robot!</p>
+			<div class="robot-label">Authentic robot sounds from emotions library and robot illustration from Pollen Robotics!</div>
+			<div class="demo-grid">
+				<!-- Left: Robot + Response Column -->
+				<div class="robot-column">
+					<div class="robot-container">
+						<div class="robot-bg">
+							<object type="image/svg+xml" data="reachy-happy.svg" class="robot-svg" id="robot-svg">
+								Reachy Robot
+							</object>
+						</div>
+					</div>
+
+					<!-- Response Box (under robot) -->
+					<div id="response-box" class="response-box">
+						<div class="response-label">💬 Latest Emotion:</div>
+						<div id="response-text" class="response-text"></div>
+					</div>
+				</div>
+
+				<!-- Right: Camera Column -->
+				<div class="camera-column">
+					<div class="video-wrapper">
+						<video id="webcam" autoplay playsinline muted></video>
+						<canvas id="canvas"></canvas>
+
+						<!-- Status overlay -->
+						<div class="demo-status">
+							<span id="status-indicator" class="status-dot"></span>
+							<span id="status-text">Click Start to begin</span>
+						</div>
+
+						<!-- FPS counter -->
+						<div class="fps-counter">
+							<span id="fps">0</span> FPS
+						</div>
+
+						<!-- Loader overlay -->
+						<div id="loader" class="loader-overlay">
+							<div class="spinner"></div>
+							<p id="loader-text">Loading AI model...</p>
+						</div>
+					</div>
+
+					<!-- Controls -->
+					<div class="demo-controls">
+						<button id="camera-btn" class="btn-demo btn-secondary">
+							<span id="camera-icon">📹</span>
+							<span id="camera-text">Open Camera</span>
+						</button>
+						<button id="start-btn" class="btn-demo btn-primary" disabled>
+							<span id="btn-icon">▶️</span>
+							<span id="btn-text">Start Detection</span>
+						</button>
 					</div>
 				</div>
 			</div>
@@ -375,6 +445,9 @@
 			<p class="footer-text">Open Source • Built for productivity 🤖</p>
 		</div>
 	</footer>
+
+	<!-- Demo JavaScript -->
+	<script type="module" src="demo.js"></script>
 </body>
 
 </html>
