@@ -88,28 +88,20 @@
 			<p class="section-subtitle">Just a quick teaser demo! If you haven't tried Reachy Mini yet, this is a fun way to get a taste of what it can do. Hope it makes you smile :) and sparks your curiosity to try the full real simulation/robot. For the complete experience with expressive robot animations, head movements, and all 9 personalities, download this app to your Reachy Mini robot!</p>
 			<div class="robot-label">Authentic robot sounds from emotions library and robot illustration from Pollen Robotics!</div>
 			<div class="demo-grid">
-				<!-- Left: Robot + Response Column -->
-				<div class="robot-column">
-					<div class="robot-container">
-						<div class="robot-bg">
-							<object type="image/svg+xml" data="reachy-happy.svg" class="robot-svg" id="robot-svg">
-								Reachy Robot
-							</object>
-						</div>
-					</div>
-
-					<!-- Response Box (under robot) -->
-					<div id="response-box" class="response-box">
-						<div class="response-label">💬 Latest Emotion:</div>
-						<div id="response-text" class="response-text"></div>
-					</div>
-				</div>
-
-				<!-- Right: Camera Column -->
+				<!-- Camera with Robot PiP -->
 				<div class="camera-column">
 					<div class="video-wrapper">
 						<video id="webcam" autoplay playsinline muted></video>
 						<canvas id="canvas"></canvas>
+
+						<!-- Robot PiP Overlay -->
+						<div class="robot-pip">
+							<div class="robot-bg-pip">
+								<object type="image/svg+xml" data="reachy-happy.svg" class="robot-svg-pip" id="robot-svg">
+									Reachy Robot
+								</object>
+							</div>
+						</div>
 
 						<!-- Status overlay -->
 						<div class="demo-status">
@@ -139,6 +131,12 @@
 							<span id="btn-icon">▶️</span>
 							<span id="btn-text">Start Detection</span>
 						</button>
+					</div>
+
+					<!-- Response Box (below camera) -->
+					<div id="response-box" class="response-box">
+						<div class="response-label">💬 Latest Emotion:</div>
+						<div id="response-text" class="response-text">Pick up your phone to hear Reachy react!</div>
 					</div>
 				</div>
 			</div>
