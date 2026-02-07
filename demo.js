@@ -32,7 +32,7 @@ const hideLoader = () => {
 };
 
 // Demo defaults (hardcoded - Pure Reachy mode)
-const DEMO_COOLDOWN = 30;  // 30 seconds cooldown
+const DEMO_COOLDOWN = 10;  // 10 seconds cooldown
 const DEMO_PRAISE_ENABLED = true;  // Enable praise sounds!
 
 // State
@@ -149,6 +149,10 @@ async function startCamera() {
         video.srcObject = stream;
         await video.play();
 
+        // Show video and canvas
+        video.style.display = 'block';
+        canvas.style.display = 'block';
+
         canvas.width = offscreen.width = video.videoWidth;
         canvas.height = offscreen.height = video.videoHeight;
 
@@ -176,7 +180,10 @@ function stopCamera() {
         cancelAnimationFrame(animationId);
     }
 
+    // Clear and hide video/canvas when closed
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    video.style.display = 'none';
+    canvas.style.display = 'none';
 }
 
 // Main loop (like YOLO26-WebGPU)
@@ -224,6 +231,18 @@ async function detectAndProcess() {
         phoneVisible = true;
         consecutiveNoPhone = 0;
 
+        const now = Date.now();
+        const cooldown = DEMO_COOLDOWN * 1000;
+
+        if (now - lastReactionTime >= cooldown) {
+            phoneCount++;
+            lastReactionTime = now;
+            handlePhonePickup();
+        }
+    }
+
+    // Check for periodic reaction while STILL holding phone
+    if (phoneVisible && phoneInFrame) {
         const now = Date.now();
         const cooldown = DEMO_COOLDOWN * 1000;
 
@@ -483,6 +502,7 @@ cameraBtn.addEventListener('click', async () => {
         consecutiveNoPhone = 0;
         lastPhoneBox = null;
         framesWithoutDetection = 0;
+        lastReactionTime = 0;
     }
 });
 
@@ -507,6 +527,7 @@ startBtn.addEventListener('click', async () => {
         consecutiveNoPhone = 0;
         lastPhoneBox = null;
         framesWithoutDetection = 0;
+        lastReactionTime = 0;
     }
 });
 
