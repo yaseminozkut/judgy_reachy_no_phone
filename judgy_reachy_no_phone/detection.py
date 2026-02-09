@@ -49,7 +49,7 @@ class PhoneDetector:
         self.loading_message = ""
 
     def initialize(self):
-        """Load YOLO model with progress reporting."""
+        """Load YOLO model with progress reporting and TensorRT support."""
         if self._initialized:
             return True
 
@@ -63,30 +63,78 @@ class PhoneDetector:
 
             import torch
             from ultralytics import YOLO
+            import os
 
             # Auto-detect best device (supports CUDA, MPS, and CPU)
             if torch.cuda.is_available():
                 device = 'cuda'  # NVIDIA GPU
+                use_tensorrt = True
             elif torch.backends.mps.is_available():
                 device = 'mps'   # Apple Silicon GPU
+                use_tensorrt = False
             else:
                 device = 'cpu'   # Fallback to CPU
+                use_tensorrt = False
 
-            self.loading_message = f"Loading YOLO26m on {device.upper()}..."
-            if self.loading_callback:
-                self.loading_callback("loading", f"Loading YOLO26m on {device.upper()}...")
+            # TensorRT optimization for NVIDIA GPUs (2-3x faster!)
+            if use_tensorrt:
+                engine_path = "yolo26m.engine"
 
-            # Use pretrained YOLO26m model (better accuracy than 26n)
-            self.yolo_model = YOLO("yolo26m.pt").to(device)
+                # Check if TensorRT engine already exists
+                if os.path.exists(engine_path):
+                    try:
+                        logger.info("Found existing TensorRT engine, loading...")
+                        self.loading_message = "Loading TensorRT engine..."
+                        if self.loading_callback:
+                            self.loading_callback("loading", "Loading TensorRT engine...")
+
+                        self.yolo_model = YOLO(engine_path)
+                        logger.info("✅ Loaded TensorRT engine (2-3x faster!)")
+
+                    except Exception as e:
+                        logger.warning(f"TensorRT engine load failed: {e}, falling back to PyTorch")
+                        use_tensorrt = False
+                else:
+                    # Export to TensorRT engine (one-time, takes 1-2 minutes)
+                    try:
+                        logger.info("TensorRT engine not found, exporting (one-time setup, ~1-2 min)...")
+                        self.loading_message = "Exporting to TensorRT (first time, ~1-2 min)..."
+                        if self.loading_callback:
+                            self.loading_callback("loading", "Exporting to TensorRT (first time, ~1-2 min)...")
+
+                        # Load PyTorch model first
+                        temp_model = YOLO("yolo26m.pt")
+
+                        # Export to TensorRT
+                        temp_model.export(format='engine', device=0, half=True, workspace=4)
+                        logger.info("✅ TensorRT export complete!")
+
+                        # Load the exported engine
+                        self.yolo_model = YOLO(engine_path)
+                        logger.info("✅ Loaded TensorRT engine (2-3x faster!)")
+
+                    except Exception as e:
+                        logger.warning(f"TensorRT export failed: {e}, using PyTorch instead")
+                        use_tensorrt = False
+
+            # Fallback to PyTorch (if not NVIDIA GPU or TensorRT failed)
+            if not use_tensorrt:
+                self.loading_message = f"Loading YOLO26m on {device.upper()}..."
+                if self.loading_callback:
+                    self.loading_callback("loading", f"Loading YOLO26m on {device.upper()}...")
+
+                self.yolo_model = YOLO("yolo26m.pt").to(device)
+                logger.info(f"Loaded YOLO26m on {device.upper()} (PyTorch)")
 
             # Report success
+            backend = "TensorRT" if use_tensorrt else device.upper()
             self.loading_status = "ready"
-            self.loading_message = f"Model ready on {device.upper()}"
+            self.loading_message = f"Model ready on {backend}"
             if self.loading_callback:
-                self.loading_callback("ready", f"Model ready on {device.upper()}")
+                self.loading_callback("ready", f"Model ready on {backend}")
 
             self._initialized = True
-            logger.info(f"YOLO26m model loaded on {device.upper()}")
+            logger.info(f"YOLO26m model loaded on {backend}")
             return True
 
         except Exception as e:
