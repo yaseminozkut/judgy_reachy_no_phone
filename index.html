@@ -72,7 +72,7 @@
 				</div>
 
 				<div class="hero-right">
-					<div style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-top: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+					<div id="demo-preview" style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-top: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
 						<img src="quick_demo.gif" alt="Judgy Reachy demo - phone detection in action" style="width: 100%; display: block;">
 					</div>
 
@@ -88,17 +88,19 @@
 			<h2 class="section-title">Interactive Browser Demo</h2>
 			<p class="section-subtitle">Just a quick teaser demo! If you haven't tried Reachy Mini yet, this is a fun way to get a taste of what it can do. Hope it makes you smile :) and sparks your curiosity to try the full real simulation/robot. For the complete experience with expressive robot animations, head movements, and all 9 personalities, download this app to your Reachy Mini robot!</p>
 
-			<!-- Mobile Notice -->
-			<div id="mobile-notice" class="mobile-notice">
-				<div class="notice-icon">💻</div>
-				<div class="notice-content">
-					<div class="notice-title">Best on Desktop</div>
-					<div class="notice-text">This demo uses WebGPU and works best on desktop for optimal performance. Mobile uses optimized YOLO26n model.</div>
-				</div>
+			<!-- Mobile Alternative (shown only on mobile) -->
+			<div id="mobile-alternative" class="mobile-alternative">
+				<h4 class="mobile-hero-title">📱🤔</h4>
+				<h4 class="mobile-hero-title">Wait a second...</h4>
+				<p class="mobile-hero-text">
+					You're on your phone right now! How can we detect you picking up your phone... when you're already holding it? :)
+				</p>
+				<p class="mobile-hero-subtext">
+					This interactive demo needs a laptop browser (Chrome/Edge) to work properly. Mobile browsers aren't optimized for WebGPU real-time inference yet.
+				</p>
 			</div>
 
-			<div class="robot-label">Try the demo! Download for full robot experience and personalities with robot movements.</div>
-			<div class="demo-grid">
+			<div class="demo-grid" id="demo-grid">
 				<!-- Camera with Robot PiP -->
 				<div class="camera-column">
 					<div class="video-wrapper">
