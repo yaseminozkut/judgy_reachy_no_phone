@@ -937,6 +937,58 @@ section {
 	transform: translateY(-2px);
 }
 
+/* Like Reminder (Contest CTA) */
+.like-reminder {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	margin: 2rem auto 1.5rem;
+	padding: 1.25rem 1.5rem;
+	background: linear-gradient(135deg, rgba(255, 107, 74, 0.15), rgba(255, 107, 74, 0.08));
+	border: 2px solid var(--coral);
+	border-radius: var(--radius-md);
+	max-width: 500px;
+	animation: pulse-border 2s ease-in-out infinite;
+}
+
+.like-icon {
+	font-size: 2.5rem;
+	animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeat {
+	0%, 100% { transform: scale(1); }
+	25% { transform: scale(1.1); }
+	50% { transform: scale(1); }
+}
+
+@keyframes pulse-border {
+	0%, 100% { border-color: var(--coral); }
+	50% { border-color: var(--coral-light); }
+}
+
+.like-text {
+	flex: 1;
+	text-align: left;
+	font-size: 0.95rem;
+	color: var(--text-body);
+	line-height: 1.5;
+}
+
+.like-text strong {
+	color: var(--text-primary);
+	font-size: 1.05rem;
+	display: block;
+	margin-bottom: 0.25rem;
+}
+
+.laptop-hint {
+	font-size: 0.9rem;
+	color: var(--text-muted);
+	font-style: italic;
+	margin-top: 1rem;
+}
+
 /* Responsive Design */
 
 @media (max-width: 768px) {
