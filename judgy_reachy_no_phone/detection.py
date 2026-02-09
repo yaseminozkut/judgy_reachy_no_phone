@@ -3,7 +3,7 @@
 import time
 import logging
 from collections import deque
-from typing import Optional
+from typing import Optional, Dict, Any
 
 import cv2
 import numpy as np
@@ -16,8 +16,13 @@ class PhoneDetector:
 
     PHONE_CLASS_ID = 67  # "cell phone" in COCO dataset
 
+    # Adaptive confidence thresholds (like demo.js)
+    DETECTION_CONFIDENCE = 0.5  # Initial detection threshold
+    TRACKING_CONFIDENCE = 0.2   # Lower threshold when tracking existing phone
+    TRACKING_PERSIST_FRAMES = 3  # Keep tracking for N frames after losing detection
+
     def __init__(self, confidence: float = 0.5):
-        self.confidence = confidence
+        self.confidence = confidence  # Kept for backward compatibility
         self.yolo_model = None
         self._initialized = False
 
@@ -30,6 +35,10 @@ class PhoneDetector:
 
         # History for robust detection
         self.history = deque(maxlen=30)
+
+        # Tracking persistence (like demo.js)
+        self.last_phone_box: Optional[Dict[str, Any]] = None
+        self.frames_without_detection = 0
 
         # For visualization
         self.last_detections = []
@@ -51,33 +60,94 @@ class PhoneDetector:
             else:
                 device = 'cpu'   # Fallback to CPU
 
-            # Use pretrained YOLO26n model
-            self.yolo_model = YOLO("yolo26n.pt").to(device)
+            # Use pretrained YOLO26m model (better accuracy than 26n)
+            self.yolo_model = YOLO("yolo26m.pt").to(device)
             self._initialized = True
-            logger.info(f"YOLO model loaded on {device.upper()}")
+            logger.info(f"YOLO26m model loaded on {device.upper()}")
             return True
         except Exception as e:
             logger.error(f"Failed to load YOLO: {e}")
             return False
 
     def detect_phone(self, frame: np.ndarray) -> bool:
-        """Check if phone is in frame."""
+        """
+        Check if phone is in frame (backward compatible).
+
+        For new tracking features, use detect_phone_with_tracking() instead.
+        """
+        detections = self.detect_phone_with_tracking(frame)
+        return len(detections) > 0
+
+    def detect_phone_with_tracking(self, frame: np.ndarray) -> list:
+        """
+        Detect phone with adaptive confidence and tracking persistence.
+
+        Returns:
+            List of detection dicts with keys: x1, y1, x2, y2, confidence, class_name
+        """
         if not self._initialized:
             if not self.initialize():
-                return False
+                return []
 
         try:
-            results = self.yolo_model(frame, verbose=False, conf=self.confidence)
+            # Adaptive confidence: lower threshold when tracking existing phone
+            confidence_threshold = (
+                self.TRACKING_CONFIDENCE if self.last_phone_box
+                else self.DETECTION_CONFIDENCE
+            )
+
+            # Run YOLO detection with adaptive threshold
+            results = self.yolo_model(frame, verbose=False, conf=confidence_threshold)
             self.last_detections = results  # Save for visualization
+
+            # Find best phone detection (highest confidence)
+            best_phone = None
+            best_score = 0.0
 
             for result in results:
                 for box in result.boxes:
                     if int(box.cls) == self.PHONE_CLASS_ID:
-                        return True
-            return False
+                        conf = float(box.conf)
+
+                        # Track the most confident phone
+                        if conf > best_score:
+                            best_score = conf
+                            x1, y1, x2, y2 = map(int, box.xyxy[0])
+                            best_phone = {
+                                'x1': x1,
+                                'y1': y1,
+                                'x2': x2,
+                                'y2': y2,
+                                'confidence': conf,
+                                'class_name': 'cell phone'
+                            }
+
+            # Tracking persistence logic
+            new_detections = []
+
+            if best_phone:
+                # Phone detected - update tracking
+                self.last_phone_box = best_phone
+                self.frames_without_detection = 0
+                new_detections.append(best_phone)
+
+            elif self.last_phone_box and self.frames_without_detection < self.TRACKING_PERSIST_FRAMES:
+                # No detection but still tracking - persist last known box
+                self.frames_without_detection += 1
+                persisted_box = self.last_phone_box.copy()
+                persisted_box['confidence'] *= 0.9  # Fade confidence
+                new_detections.append(persisted_box)
+
+            else:
+                # Lost tracking completely
+                self.last_phone_box = None
+                self.frames_without_detection = 0
+
+            return new_detections
+
         except Exception as e:
             logger.debug(f"YOLO detection error: {e}")
-            return False
+            return []
 
     def draw_detections(self, frame: np.ndarray) -> np.ndarray:
         """Draw detection boxes on frame."""
@@ -126,7 +196,9 @@ class PhoneDetector:
             "put_down" - Phone just put down (optional praise)
             None - No state change
         """
-        phone_in_frame = self.detect_phone(frame)
+        # Use new tracking-enabled detection
+        detections = self.detect_phone_with_tracking(frame)
+        phone_in_frame = len(detections) > 0
 
         # Add to history
         self.history.append(phone_in_frame)
@@ -150,6 +222,14 @@ class PhoneDetector:
                 self.last_reaction_time = now
                 return "picked_up"
 
+        # Periodic reactions while STILL holding phone (like demo.js)
+        if self.phone_visible and phone_in_frame:
+            now = time.time()
+            if now - self.last_reaction_time >= cooldown:
+                self.phone_count += 1
+                self.last_reaction_time = now
+                return "picked_up"  # Shame again!
+
         # Check for phone put down (slow to confirm - avoids flickering)
         if self.consecutive_no_phone >= putdown_threshold and self.phone_visible:
             self.phone_visible = False
@@ -172,3 +252,13 @@ class PhoneDetector:
     def reset_count(self):
         """Reset daily count."""
         self.phone_count = 0
+
+    def reset_tracking(self):
+        """Reset tracking state (useful when stopping/starting monitoring)."""
+        self.phone_visible = False
+        self.consecutive_phone = 0
+        self.consecutive_no_phone = 0
+        self.last_phone_box = None
+        self.frames_without_detection = 0
+        self.last_reaction_time = 0
+        logger.debug("Tracking state reset")
