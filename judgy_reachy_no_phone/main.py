@@ -42,8 +42,17 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         super().__init__()
         self.config = Config()
 
-        # Components
-        self.detector = PhoneDetector(confidence=self.config.DETECTION_CONFIDENCE)
+        # Loading state tracking (like demo.js)
+        self.model_loading_status = "idle"  # idle, loading, ready, error
+        self.model_loading_message = ""
+        self.camera_loading_status = "idle"  # idle, connecting, ready, error
+        self.camera_loading_message = "Waiting for camera connection..."
+
+        # Components (pass loading callback to detector)
+        self.detector = PhoneDetector(
+            confidence=self.config.DETECTION_CONFIDENCE,
+            loading_callback=self._on_model_loading
+        )
         self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY, personality="pure_reachy")
         # Don't pass config voice defaults - let personalities use their own defaults
         self.tts = TextToSpeech(
@@ -79,6 +88,12 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.camera_running = False
         self.camera_fps = 0
         self.detection_event_queue = []
+
+    def _on_model_loading(self, status: str, message: str):
+        """Callback for model loading progress (like demo.js)."""
+        self.model_loading_status = status
+        self.model_loading_message = message
+        logger.info(f"Model loading: {status} - {message}")
 
         # Register API endpoint for personalities (must be before server starts)
         @self.settings_app.get("/api/personalities")
@@ -222,7 +237,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         )
         ui_thread.start()
 
-        # Initialize detector
+        # Initialize detector (reports loading progress)
+        logger.info("Initializing YOLO model...")
         self.detector.initialize()
 
         # Auto-detect: Use laptop webcam in simulation, robot camera otherwise
@@ -231,12 +247,19 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
         if is_simulation:
             logger.info("Simulation mode detected - using laptop webcam...")
+            self.camera_loading_status = "connecting"
+            self.camera_loading_message = "Opening laptop webcam..."
+
             webcam = cv2.VideoCapture(0)
             if not webcam.isOpened():
                 logger.error("Failed to open laptop webcam!")
+                self.camera_loading_status = "error"
+                self.camera_loading_message = "Failed to open webcam"
                 webcam = None
             else:
                 logger.info("Laptop webcam opened successfully!")
+                self.camera_loading_status = "ready"
+                self.camera_loading_message = "Camera connected"
                 self.camera_running = True
 
                 # Start fast camera thread
@@ -248,7 +271,12 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 camera_thread.start()
         else:
             logger.info("Real robot detected - using robot camera...")
+            self.camera_loading_status = "connecting"
+            self.camera_loading_message = "Connecting to robot camera..."
+
             self.camera_running = True
+            self.camera_loading_status = "ready"
+            self.camera_loading_message = "Camera connected"
 
             # Start camera thread with robot's media system
             camera_thread = threading.Thread(
@@ -408,6 +436,20 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             reset: bool = False  # If True, reset all stats (Start Fresh)
             personality: str = "pure_reachy"  # Robot personality
 
+        # API endpoint: Get loading status (like demo.js)
+        @self.settings_app.get("/api/loading-status")
+        def get_loading_status():
+            return {
+                "model_status": self.model_loading_status,
+                "model_message": self.model_loading_message,
+                "camera_status": self.camera_loading_status,
+                "camera_message": self.camera_loading_message,
+                "overall_ready": (
+                    self.model_loading_status == "ready" and
+                    self.camera_loading_status == "ready"
+                )
+            }
+
         # API endpoint: Get video frame
         @self.settings_app.get("/api/video-frame")
         def get_video_frame():
@@ -440,7 +482,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             else:
                 status_text = "✅ Phone-free"
 
-            mode_text = f"YOLO26n | {'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
+            mode_text = f"YOLO26m | {'LLM + TTS' if self.llm.client else 'Pre-written lines'} → {'ElevenLabs' if self.tts.eleven_client else 'Edge TTS'}"
 
             # Determine button text
             if self.is_monitoring:
@@ -622,7 +664,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             # Build mode string
             llm_text = "LLM + TTS" if result["groq_valid"] else "Pre-written lines"
             tts_text = "ElevenLabs" if result["eleven_valid"] else "Edge TTS"
-            result["mode"] = f"YOLO26n | {llm_text} → {tts_text}"
+            result["mode"] = f"YOLO26m | {llm_text} → {tts_text}"
 
             return result
 

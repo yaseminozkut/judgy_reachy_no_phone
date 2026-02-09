@@ -21,10 +21,11 @@ class PhoneDetector:
     TRACKING_CONFIDENCE = 0.2   # Lower threshold when tracking existing phone
     TRACKING_PERSIST_FRAMES = 3  # Keep tracking for N frames after losing detection
 
-    def __init__(self, confidence: float = 0.5):
+    def __init__(self, confidence: float = 0.5, loading_callback=None):
         self.confidence = confidence  # Kept for backward compatibility
         self.yolo_model = None
         self._initialized = False
+        self.loading_callback = loading_callback  # Callback to report loading progress
 
         # State tracking
         self.phone_visible = False
@@ -43,12 +44,23 @@ class PhoneDetector:
         # For visualization
         self.last_detections = []
 
+        # Loading state (like demo.js)
+        self.loading_status = "idle"  # idle, loading, ready, error
+        self.loading_message = ""
+
     def initialize(self):
-        """Load YOLO model."""
+        """Load YOLO model with progress reporting."""
         if self._initialized:
             return True
 
         try:
+            # Report loading start
+            self.loading_status = "loading"
+            self.loading_message = "Loading YOLO26m model..."
+            if self.loading_callback:
+                self.loading_callback("loading", "Loading YOLO26m model...")
+            logger.info("Starting YOLO model initialization...")
+
             import torch
             from ultralytics import YOLO
 
@@ -60,12 +72,29 @@ class PhoneDetector:
             else:
                 device = 'cpu'   # Fallback to CPU
 
+            self.loading_message = f"Loading YOLO26m on {device.upper()}..."
+            if self.loading_callback:
+                self.loading_callback("loading", f"Loading YOLO26m on {device.upper()}...")
+
             # Use pretrained YOLO26m model (better accuracy than 26n)
             self.yolo_model = YOLO("yolo26m.pt").to(device)
+
+            # Report success
+            self.loading_status = "ready"
+            self.loading_message = f"Model ready on {device.upper()}"
+            if self.loading_callback:
+                self.loading_callback("ready", f"Model ready on {device.upper()}")
+
             self._initialized = True
             logger.info(f"YOLO26m model loaded on {device.upper()}")
             return True
+
         except Exception as e:
+            # Report error
+            self.loading_status = "error"
+            self.loading_message = f"Failed to load model: {str(e)}"
+            if self.loading_callback:
+                self.loading_callback("error", f"Failed to load model: {str(e)}")
             logger.error(f"Failed to load YOLO: {e}")
             return False
 

@@ -51,8 +51,14 @@
                             <path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"></path>
                             <line x1="1" y1="1" x2="23" y2="23"></line>
                         </svg>
-                        <div class="camera-status">Camera Inactive</div>
-                        <div class="camera-message">Waiting for camera connection...</div>
+                        <div class="camera-status" id="camera-status">Camera Inactive</div>
+                        <div class="camera-message" id="camera-message">Waiting for camera connection...</div>
+                    </div>
+
+                    <!-- Loading Overlay (like demo.js) -->
+                    <div id="loader-overlay" class="loader-overlay">
+                        <div class="spinner"></div>
+                        <p id="loader-text" class="loader-text">Initializing...</p>
                     </div>
                 </div>
             </div>
