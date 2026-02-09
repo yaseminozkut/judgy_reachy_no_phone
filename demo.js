@@ -106,23 +106,53 @@ async function init() {
         cameraBtn.disabled = true;
         startBtn.disabled = true;
 
+        // Detect mobile device
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
         // Show loader
         showLoader('Loading YOLO26m model...');
         statusText.textContent = 'Loading AI model...';
         statusIndicator.className = 'status-dot loading';
 
-        // Load YOLO model
-        model = await AutoModel.from_pretrained('onnx-community/yolo26m-ONNX', {
-            device: 'webgpu',
-            dtype: 'fp16'
-        });
+        // Try WebGPU first on desktop, use WASM directly on mobile
+        let modelLoaded = false;
+
+        if (!isMobile) {
+            // Desktop: Try WebGPU first (faster)
+            try {
+                console.log('Attempting to load model with WebGPU...');
+                model = await AutoModel.from_pretrained('onnx-community/yolo26m-ONNX', {
+                    device: 'webgpu',
+                    dtype: 'fp16'
+                });
+                console.log('✅ Model loaded on WebGPU (fast)');
+                modelLoaded = true;
+            } catch (webgpuError) {
+                console.warn('WebGPU failed, falling back to WASM:', webgpuError);
+            }
+        } else {
+            console.log('Mobile device detected, using WASM backend');
+        }
+
+        // Fallback to WASM (works everywhere, including mobile)
+        if (!modelLoaded) {
+            showLoader(isMobile ? 'Loading model (mobile-optimized)...' : 'WebGPU not available, using WASM...');
+            console.log('Loading model with WASM backend...');
+
+            model = await AutoModel.from_pretrained('onnx-community/yolo26m-ONNX', {
+                device: 'wasm'
+            });
+            console.log('✅ Model loaded on WASM (compatible)');
+        }
 
         showLoader('Loading processor...');
         processor = await AutoProcessor.from_pretrained('onnx-community/yolo26m-ONNX');
 
         // Hide loader
         hideLoader();
-        statusText.textContent = 'Model ready! Open camera to begin';
+        statusText.textContent = isMobile
+            ? 'Model ready (WASM)! Open camera to begin'
+            : 'Model ready! Open camera to begin';
         statusIndicator.className = 'status-dot ready';
         cameraBtn.disabled = false;
 
@@ -284,9 +314,8 @@ async function detectAndProcess() {
 async function detectPhoneAndGetBoxes() {
     try {
         // Resize for faster inference (trade accuracy for speed)
-        const targetWidth = 320;  // Smaller = faster (try 320, 416, or 640)
+        const targetWidth = 256;  // Smaller = faster (256 for +5 FPS boost)
         const targetHeight = Math.round((targetWidth / offscreen.width) * offscreen.height);
-        console.log(`Detection resolution: ${targetWidth}x${targetHeight}`);
 
         // Create smaller canvas for YOLO
         const smallCanvas = document.createElement('canvas');
@@ -530,6 +559,28 @@ startBtn.addEventListener('click', async () => {
         lastReactionTime = 0;
     }
 });
+
+// Page Visibility API - pause ONLY on mobile when tab hidden
+// Desktop: Keep running in background (users want continuous monitoring while working)
+// Mobile: Pause to prevent browser from killing tab
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+if (isMobile) {
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && isMonitoring) {
+            console.log('Mobile: Tab hidden, pausing to prevent browser from killing tab');
+            isMonitoring = false;
+            btnIcon.textContent = '▶️';
+            btnText.textContent = 'Start Detection';
+            statusText.textContent = 'Paused (tab hidden)';
+            statusIndicator.className = 'status-dot ready';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    });
+    console.log('Mobile detected: Will auto-pause when tab hidden');
+} else {
+    console.log('Desktop: Will keep monitoring in background tabs');
+}
 
 // Initialize on load
 init();

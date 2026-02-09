@@ -3,6 +3,9 @@ let selectedPersonality = 'pure_reachy';
 let currentVoicePersonality = null;
 let voiceOverrides = JSON.parse(localStorage.getItem('voiceOverrides') || '{}');
 
+// Loading state (like demo.js)
+let loadingCheckInterval = null;
+
 // Load personalities from config dynamically
 async function loadPersonalities() {
     try {
@@ -74,7 +77,7 @@ async function updateUIForAPIKeys() {
 
     // If no API keys at all, show default message
     if (!groqKey && !elevenKey) {
-        document.getElementById('mode-text').textContent = 'YOLO26n | Pre-written personality lines → Edge TTS';
+        document.getElementById('mode-text').textContent = 'YOLO26m | Pre-written personality lines → Edge TTS';
         document.getElementById('api-notice').classList.remove('hidden');
         // Keep personalities enabled - they still have different voices and pre-written lines
         return;
@@ -421,6 +424,65 @@ async function updatePersonalityWhileRunning() {
     }
 }
 
+// Loading status functions (like demo.js)
+const showLoader = (text) => {
+    const loader = document.getElementById('loader-overlay');
+    const loaderText = document.getElementById('loader-text');
+    loaderText.textContent = text;
+    loader.classList.add('visible');
+};
+
+const hideLoader = () => {
+    const loader = document.getElementById('loader-overlay');
+    loader.classList.remove('visible');
+};
+
+// Check loading status and update UI
+async function checkLoadingStatus() {
+    try {
+        const response = await fetch('/api/loading-status');
+        const data = await response.json();
+
+        const cameraStatus = document.getElementById('camera-status');
+        const cameraMessage = document.getElementById('camera-message');
+
+        // Update loader overlay
+        if (data.model_status === 'loading') {
+            showLoader(data.model_message);
+        } else if (data.camera_status === 'connecting') {
+            showLoader(data.camera_message);
+        } else if (data.overall_ready) {
+            hideLoader();
+            // Stop polling once everything is ready
+            if (loadingCheckInterval) {
+                clearInterval(loadingCheckInterval);
+                loadingCheckInterval = null;
+            }
+        } else if (data.model_status === 'error' || data.camera_status === 'error') {
+            hideLoader();
+            if (loadingCheckInterval) {
+                clearInterval(loadingCheckInterval);
+                loadingCheckInterval = null;
+            }
+        }
+
+        // Update camera placeholder status
+        if (data.camera_status === 'connecting') {
+            cameraStatus.textContent = 'Connecting...';
+            cameraMessage.textContent = data.camera_message;
+        } else if (data.camera_status === 'ready') {
+            cameraStatus.textContent = 'Camera Ready';
+            cameraMessage.textContent = data.camera_message;
+        } else if (data.camera_status === 'error') {
+            cameraStatus.textContent = 'Camera Error';
+            cameraMessage.textContent = data.camera_message;
+        }
+
+    } catch (e) {
+        console.error('Loading status check failed:', e);
+    }
+}
+
 // Initial update - wait for personalities to load first
 async function initialize() {
     // Load personalities first
@@ -450,6 +512,10 @@ async function initialize() {
     updateDisplay();
     updateVideo();
     updateUIForAPIKeys();
+
+    // Start loading status check (poll every 500ms until ready)
+    checkLoadingStatus();  // Check immediately
+    loadingCheckInterval = setInterval(checkLoadingStatus, 500);
 
     // Auto-update every 100ms for smooth video
     setInterval(() => {
