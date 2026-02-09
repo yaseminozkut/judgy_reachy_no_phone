@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap');
 
 * {
 	margin: 0;
@@ -34,7 +34,7 @@ html {
 }
 
 body {
-	font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+	font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 	background: var(--bg-dark);
 	color: var(--text-primary);
 	line-height: 1.6;
@@ -99,7 +99,7 @@ body::after {
 	display: flex;
 	align-items: center;
 	gap: 0.75rem;
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-weight: 700;
 	font-size: 1.15rem;
 	color: var(--text-primary);
@@ -207,7 +207,7 @@ body::after {
 }
 
 .hero-title {
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-size: clamp(3rem, 7vw, 4.5rem);
 	font-weight: 700;
 	line-height: 1.1;
@@ -316,7 +316,7 @@ section {
 }
 
 .section-title {
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-size: clamp(2rem, 5vw, 3rem);
 	font-weight: 700;
 	text-align: center;
@@ -355,7 +355,7 @@ section {
 }
 
 .callout-title {
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-size: 1.75rem;
 	font-weight: 700;
 	margin-bottom: 1.25rem;
@@ -438,7 +438,7 @@ section {
 }
 
 .config-card h3 {
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-size: 1.5rem;
 	font-weight: 700;
 	margin-bottom: 0.75rem;
@@ -508,8 +508,8 @@ section {
 
 .personalities-grid {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-	gap: 1rem;
+	grid-template-columns: repeat(3, 1fr);  /* Fixed 3 columns */
+	gap: 1.5rem;
 }
 
 .personality-card {
@@ -550,7 +550,7 @@ section {
 .personality-card:nth-child(9) .personality-emoji { animation-delay: 1.6s; }
 
 .personality-card h3 {
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-size: 1.1rem;
 	font-weight: 700;
 	margin-bottom: 0.5rem;
@@ -646,7 +646,7 @@ section {
 }
 
 .feature-item h3 {
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-size: 1.25rem;
 	font-weight: 700;
 	margin-bottom: 0.75rem;
@@ -703,7 +703,7 @@ section {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-weight: 700;
 	font-size: 1rem;
 	color: white;
@@ -751,101 +751,6 @@ section {
 	color: var(--coral);
 }
 
-/* How It Works */
-.how-section {
-	text-align: center;
-}
-
-.steps-flow {
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-	gap: 0;
-	max-width: 1000px;
-	margin: 0 auto;
-	position: relative;
-}
-
-.steps-flow::before {
-	content: '';
-	position: absolute;
-	top: 50px;
-	left: 10%;
-	right: 10%;
-	height: 3px;
-	background: linear-gradient(90deg, var(--coral), var(--lavender), var(--sky), var(--mint));
-	border-radius: 100px;
-	z-index: 0;
-}
-
-.step-box {
-	background: var(--bg-card);
-	border: 2px solid var(--border-soft);
-	border-radius: var(--radius-lg);
-	padding: 1.75rem;
-	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-	box-shadow: var(--shadow-sm);
-	position: relative;
-	z-index: 1;
-	margin: 0 0.5rem;
-}
-
-.step-box:hover {
-	border-color: var(--coral);
-	box-shadow: var(--shadow-md);
-	transform: translateY(-4px);
-}
-
-.step-num {
-	width: 44px;
-	height: 44px;
-	background: linear-gradient(135deg, var(--coral), var(--coral-light));
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	font-family: 'Space Grotesk', sans-serif;
-	font-weight: 700;
-	font-size: 1.2rem;
-	margin: 0 auto 1.25rem;
-	color: white;
-	box-shadow: 0 4px 12px rgba(255, 107, 74, 0.35);
-}
-
-.step-box:nth-child(2) .step-num {
-	background: linear-gradient(135deg, var(--lavender), #8B6BD8);
-	box-shadow: 0 4px 12px rgba(155, 126, 232, 0.35);
-}
-
-.step-box:nth-child(3) .step-num {
-	background: linear-gradient(135deg, var(--sky), #3EBDB4);
-	box-shadow: 0 4px 12px rgba(78, 205, 196, 0.35);
-}
-
-.step-box:nth-child(4) .step-num {
-	background: linear-gradient(135deg, var(--mint), #5AB868);
-	box-shadow: 0 4px 12px rgba(107, 203, 119, 0.35);
-}
-
-.step-arrow {
-	display: none;
-}
-
-.step-box h3 {
-	font-family: 'Space Grotesk', sans-serif;
-	font-size: 1rem;
-	font-weight: 700;
-	margin-bottom: 0.6rem;
-	color: var(--text-primary);
-}
-
-.step-box p {
-	font-size: 0.85rem;
-	color: var(--text-muted);
-	line-height: 1.6;
-}
-
-/* Tech Stack */
-.tech-section {
 	text-align: center;
 }
 
@@ -882,7 +787,7 @@ section {
 }
 
 .tech-value {
-	font-family: 'Space Grotesk', sans-serif;
+	font-family: 'Inter', sans-serif;
 	font-size: 0.95rem;
 	font-weight: 600;
 	color: var(--text-primary);
@@ -1052,7 +957,7 @@ section {
 
 .demo-section {
 	padding: 5rem 2rem;
-	background: var(--bg-dark);
+	/* Background inherits from body for seamless blend */
 }
 
 .demo-grid {
@@ -1689,10 +1594,19 @@ section {
 }
 
 .robot-label {
-	color: #94a3b8;
-	font-size: 0.9rem;
-	font-weight: 600;
+	display: none;  /* Hidden on desktop */
+	color: #cbd5e1;
+	font-size: 0.85rem;
+	font-weight: 500;
 	text-align: center;
+	line-height: 1.5;
+	margin-bottom: 2rem;
+}
+
+@media (max-width: 640px) {
+	.robot-label {
+		display: block;  /* Show on mobile only */
+	}
 }
 
 /* Robot Animations */
@@ -1834,12 +1748,22 @@ section {
 	.hero-cta {
 		flex-direction: column;
 		width: 100%;
+		margin-bottom: 0.5rem;
+		margin-top: 2rem;  /* Space above buttons */
+	}
+
+	.hero-tech {
+		margin-bottom: 1rem;  /* Space after tech pills */
 	}
 
 	.cta-button,
 	.cta-button-secondary {
 		width: 100%;
 		justify-content: center;
+	}
+
+	.hero-grid {
+		gap: 1rem;  /* Reduce gap between hero sections */
 	}
 }
 
@@ -1890,5 +1814,360 @@ section {
 	.robot-pip {
 		bottom: 0.5rem;
 		right: 0.5rem;
+	}
+}
+
+/* Mobile: Smaller tag and move content up */
+@media (max-width: 640px) {
+	.hero-label {
+		font-size: 0.65rem;
+		padding: 0.35rem 0.75rem 0.35rem 0.5rem;
+		margin-bottom: 1rem;
+	}
+
+	.hero-label::before {
+		font-size: 0.9rem;
+	}
+
+	.hero-section {
+		padding: 2rem 0 2rem;  /* Move up - less top padding */
+	}
+
+	.hero-title {
+		font-size: 2.25rem;
+		margin-bottom: 1rem;
+	}
+
+	.hero-description {
+		font-size: 1rem;
+		margin-bottom: 1.5rem;
+	}
+}
+
+/* Mobile: Smaller status and move hero up */
+@media (max-width: 640px) {
+	.demo-section .section-subtitle {
+		display: none;  /* Hide long text on mobile */
+	}
+
+	.demo-status {
+		padding: 0.4rem 0.7rem;
+		font-size: 0.65rem;
+		gap: 0.4rem;
+	}
+
+	.status-dot {
+		width: 6px;
+		height: 6px;
+	}
+
+	#status-text {
+		font-size: 0.65rem;
+	}
+
+	.fps-counter {
+		padding: 0.3rem 0.6rem;
+		font-size: 0.6rem;
+	}
+}
+
+/* Mobile-specific subtitle */
+.mobile-subtitle {
+	display: none;  /* Hidden on desktop */
+}
+
+@media (max-width: 640px) {
+	.mobile-subtitle {
+		display: block;  /* Show on mobile */
+		color: #cbd5e1;
+		font-size: 0.85rem;
+		line-height: 1.5;
+		text-align: center;
+		margin-bottom: 2rem;
+		padding: 0 1rem;
+	}
+}
+
+/* Mobile: Tighter hero spacing and GIF closer to top */
+@media (max-width: 640px) {
+	.hero-right > div {
+		margin-top: 1rem !important;  /* Bring GIF up (was 2rem) */
+	}
+
+	.hero-left {
+		margin-bottom: 1.5rem;  /* Small gap before GIF */
+	}
+}
+
+/* Mobile: More space between GIF and demo title */
+@media (max-width: 640px) {
+	.demo-section {
+		padding-top: 0.2rem;  /* More space above demo section */
+	}
+
+	.demo-section .section-title {
+		margin-top: 1rem;
+	}
+}
+
+/* Mobile: Tighter demo section spacing */
+@media (max-width: 640px) {
+	.demo-section .section-title {
+		margin-bottom: 0.5rem;  /* Minimal space after title */
+		margin-top: 0;
+	}
+
+	.robot-label {
+		margin-bottom: 0.75rem;  /* Minimal space before demo grid */
+		margin-top: 0;
+	}
+
+	.demo-grid {
+		margin-top: 0;  /* Remove top margin */
+	}
+}
+
+/* Hide Quick Setup on mobile */
+@media (max-width: 640px) {
+	.getting-started-section {
+		display: none;
+	}
+}
+
+/* Setup guide links */
+.setup-link {
+	color: var(--coral-light);
+	text-decoration: none;
+	border-bottom: 1px solid var(--coral-light);
+	transition: all 0.2s ease;
+	white-space: nowrap;
+}
+
+.setup-link:hover {
+	color: var(--coral);
+	border-bottom-color: var(--coral);
+}
+
+/* Override: Ultra-simple links, no fancy styling */
+.guide-list a {
+	color: var(--coral-light) !important;
+	text-decoration: none !important;
+	border: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	display: inline !important;
+	background: none !important;
+}
+
+.guide-list a:hover {
+	text-decoration: underline !important;
+}
+
+
+/* Inter Font Weight Hierarchy */
+body {
+	font-weight: 400;  /* Regular for body text */
+}
+
+h1, h2, h3 {
+	font-weight: 700;  /* Bold for main headings */
+}
+
+h4, h5, h6, strong {
+	font-weight: 600;  /* Semibold */
+}
+
+.section-subtitle, .text-muted {
+	font-weight: 300;  /* Light for subtle text */
+}
+
+.btn-demo {
+	font-weight: 500;  /* Medium for buttons */
+}
+
+/* Mobile: Smaller 3-column personalities */
+@media (max-width: 640px) {
+	.personalities-grid {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.25rem;  /* Tighter spacing */
+	}
+
+	.personality-card {
+		padding: 0.5rem 0.25rem;  /* Minimal padding */
+		border: none;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.personality-card:hover {
+		transform: none;
+		box-shadow: none;
+	}
+
+	.personality-emoji {
+		font-size: 1.5rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.personality-card h3 {
+		font-size: 0.75rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.personality-card p {
+		display: none;  /* Hide description on mobile */
+	}
+
+	.personality-tags {
+		display: none;  /* Hide tags to save space */
+	}
+}
+
+/* Mobile: Compact features (3 columns) */
+@media (max-width: 640px) {
+	.features-grid {
+		grid-template-columns: repeat(3, 1fr);
+		gap: 0.25rem;
+	}
+
+	.feature-item {
+		padding: 0.75rem 0.5rem;
+		border: none;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.feature-item:hover {
+		transform: none;
+	}
+
+	.feature-icon-badge {
+		width: 36px;
+		height: 36px;
+		margin-bottom: 0.5rem;
+		border-radius: 8px;
+	}
+
+	.feature-icon-badge svg {
+		width: 16px;
+		height: 16px;
+	}
+
+	.feature-item h3 {
+		font-size: 0.75rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.feature-item p {
+		display: none;  /* Hide description */
+	}
+}
+
+/* Mobile: Compact steps (2x2 grid for 4 steps) */
+@media (max-width: 640px) {
+	.steps-flow {
+		grid-template-columns: repeat(2, 1fr);
+		gap: 0.5rem;
+	}
+
+	.step-box {
+		padding: 1rem 0.75rem;
+		margin: 0;
+		border: none;
+		background: transparent;
+		box-shadow: none;
+	}
+
+	.step-box:hover {
+		transform: none;
+	}
+
+	.step-num {
+		width: 32px;
+		height: 32px;
+		font-size: 0.9rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.step-box h3 {
+		font-size: 0.75rem;
+		margin-bottom: 0.25rem;
+	}
+
+	.step-box p {
+		font-size: 0.65rem;
+	}
+}
+
+/* Mobile: Prevent all overflow */
+@media (max-width: 640px) {
+	* {
+		max-width: 100% !important;
+		overflow-wrap: break-word !important;
+		word-wrap: break-word !important;
+	}
+
+	.container {
+		padding: 0 0.75rem !important;
+	}
+
+	body {
+		overflow-x: hidden !important;
+	}
+
+	/* Force sections to fit */
+	section {
+		padding-left: 1rem !important;
+		padding-right: 1rem !important;
+	}
+}
+
+/* Mobile: Hide detailed sections (focus on demo) */
+@media (max-width: 640px) {
+	.config-section,
+	.features-section,
+	.how-section,
+	.personalities-section {
+		display: none;
+	}
+}
+
+/* Mobile: Smaller, organized hero tags */
+@media (max-width: 640px) {
+	.hero-tags {
+		gap: 0.4rem;
+		justify-content: center;
+	}
+
+	.tag {
+		padding: 0.35rem 0.65rem;
+		font-size: 0.7rem;
+		border-width: 1px;
+	}
+
+	.hero-tech-stack {
+		gap: 0.35rem;
+		justify-content: center;
+	}
+
+	.tech-pill {
+		padding: 0.3rem 0.55rem;
+		font-size: 0.65rem;
+		border-width: 1px;
+	}
+}
+
+/* Mobile: Smaller response box text */
+@media (max-width: 640px) {
+	.response-label {
+		font-size: 0.75rem;
+	}
+
+	.response-text {
+		font-size: 0.85rem;
+	}
+
+	.response-box {
+		padding: 1rem;
 	}
 }

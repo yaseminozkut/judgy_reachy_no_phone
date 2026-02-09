@@ -71,7 +71,7 @@
 				</div>
 
 				<div class="hero-right">
-					<div style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-top: 5rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+					<div style="border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3); margin-top: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
 						<img src="quick_demo.gif" alt="Judgy Reachy demo - phone detection in action" style="width: 100%; display: block;">
 					</div>
 
@@ -84,9 +84,9 @@
 	<!-- Try Demo Section -->
 	<section id="demo" class="demo-section">
 		<div class="container">
-			<h2 class="section-title">Interactive Teaser Browser Demo</h2>
+			<h2 class="section-title">Interactive Browser Demo</h2>
 			<p class="section-subtitle">Just a quick teaser demo! If you haven't tried Reachy Mini yet, this is a fun way to get a taste of what it can do. Hope it makes you smile :) and sparks your curiosity to try the full real simulation/robot. For the complete experience with expressive robot animations, head movements, and all 9 personalities, download this app to your Reachy Mini robot!</p>
-			<div class="robot-label">Authentic robot sounds from emotions library and robot illustration from Pollen Robotics!</div>
+			<div class="robot-label">Try the demo! Download for full robot experience and personalities with robot movements.</div>
 			<div class="demo-grid">
 				<!-- Camera with Robot PiP -->
 				<div class="camera-column">
@@ -152,22 +152,34 @@
 			<div class="guide-card">
 				<ol class="guide-list">
 					<li>
-						<strong>Start the app</strong> and wait for the camera to connect
+						<strong>Install Reachy Mini SDK</strong> - Follow the <a href="https://github.com/pollen-robotics/reachy_mini/blob/main/docs/source/SDK/installation.md" target="_blank" class="setup-link">installation guide</a>
 					</li>
 					<li>
-						<strong>Choose a personality</strong> - all 9 work immediately
+						<strong>Install this app</strong> - Via <a href="https://github.com/pollen-robotics/reachy_mini/" target="_blank" class="setup-link">Reachy Mini SDK</a> or <a href="https://github.com/pollen-robotics/reachy-mini-desktop-app" target="_blank" class="setup-link">Desktop App</a>
 					</li>
 					<li>
-						<strong>Add API keys</strong> (optional) - From settings on the right top corner
-						<a href="https://console.groq.com" target="_blank" class="api-link-inline">Groq →</a>
-						<a href="https://elevenlabs.io" target="_blank" class="api-link-inline">ElevenLabs →</a>
-					</li>
+						<strong>Start Reachy daemon</strong> - See <a href="https://github.com/pollen-robotics/reachy_mini/blob/main/docs/source/SDK/quickstart.md" target="_blank" class="setup-link">quickstart guide</a> (simulation or real robot)
 					</li>
 					<li>
-						<strong>Adjust settings</strong> (optional) - From settings on the right top corner (enable/disable praise response after you put your phone down or adjust cooldown time for next pickup)
+						<strong>Launch & open UI</strong> - Start the app and visit <code>http://localhost:8042</code>
+					</li>
+				</ol>
+
+				<!-- Usage Guide -->
+				<h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700; margin: 3rem 0 1.5rem; color: var(--coral-light);">Using the App</h3>
+
+				<ol class="guide-list" style="counter-reset: step-counter;">
+					<li>
+						<strong>Choose a personality</strong> - All 9 work immediately with pre-written responses
 					</li>
 					<li>
-						<strong>Customize voices</strong> (optional) - Add custom voice IDs per personality (setting inside personality card). Auto-fallback to default if unavailable.
+						<strong>Add API keys</strong> (optional) - <a href="https://console.groq.com" target="_blank" class="setup-link">Groq</a> for LLM, <a href="https://elevenlabs.io" target="_blank" class="setup-link">ElevenLabs</a> for premium voices
+					</li>
+					<li>
+						<strong>Adjust settings</strong> (optional) - Cooldown time, enable/disable praise mode
+					</li>
+					<li>
+						<strong>Customize voices</strong> (optional) - Custom voice IDs per personality with auto-fallback
 					</li>
 				</ol>
 			</div>
@@ -225,8 +237,8 @@
 					<h3>Pure Reachy</h3>
 					<p>No speech, pure authentic Reachy emotions from Pollen Robotics library.</p>
 					<div class="personality-tags">
-						<span class="personality-tag">Default</span>
-						<span class="personality-tag">No TTS</span>
+						<span class="personality-tag">Cute</span>
+						<span class="personality-tag">Emotions</span>
 					</div>
 				</div>
 
@@ -246,8 +258,8 @@
 					<h3>Sarcastic</h3>
 					<p>Dripping with dry wit. Mock enthusiasm, feigned interest. Peak passive aggression.</p>
 					<div class="personality-tags">
-						<span class="personality-tag">Deadpan</span>
-						<span class="personality-tag">Sardonic</span>
+						<span class="personality-tag">Passive-aggressive</span>
+						<span class="personality-tag">Ironic</span>
 					</div>
 				</div>
 
@@ -297,7 +309,7 @@
 					<p>Impeccably polite yet quietly judgmental.</p>
 					<div class="personality-tags">
 						<span class="personality-tag">Formal</span>
-						<span class="personality-tag">Passive-Aggressive</span>
+						<span class="personality-tag">Polite</span>
 					</div>
 				</div>
 
@@ -390,41 +402,6 @@
 					</div>
 					<h3>Fully Configurable</h3>
 					<p>Adjust cooldown (10-120s), enable praise mode, switch personalities via intuitive web UI.</p>
-				</div>
-			</div>
-		</div>
-	</section>
-
-	<!-- How It Works -->
-	<section class="how-section">
-		<div class="container">
-			<div class="section-label">How It Works</div>
-			<h2 class="section-title">Four Simple Steps</h2>
-			<p class="section-subtitle">From detection to shame delivery</p>
-
-			<div class="steps-flow">
-				<div class="step-box">
-					<div class="step-num">1</div>
-					<h3>Camera Watch</h3>
-					<p>Reachy's camera processes frames at 5 FPS for real-time monitoring.</p>
-				</div>
-
-				<div class="step-box">
-					<div class="step-num">2</div>
-					<h3>Phone Detected</h3>
-					<p>YOLO26n spots your phone with 3-frame confirmation.</p>
-				</div>
-
-				<div class="step-box">
-					<div class="step-num">3</div>
-					<h3>Shame Delivered</h3>
-					<p>Robot generates or picks a snarky comment and speaks it.</p>
-				</div>
-
-				<div class="step-box">
-					<div class="step-num">4</div>
-					<h3>Robot Reacts</h3>
-					<p>Expressions escalate with repeat offenses. Put phone down for praise!</p>
 				</div>
 			</div>
 		</div>
