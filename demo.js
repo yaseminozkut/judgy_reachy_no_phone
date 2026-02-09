@@ -55,9 +55,13 @@ let lastReactionTime = 0;
 let lastPhoneBox = null;  // Last known phone position
 let framesWithoutDetection = 0;  // Count frames without detection
 
-// Offscreen canvas for processing
+// Offscreen canvases for processing (reused to prevent memory leaks)
 const offscreen = document.createElement('canvas');
 const offscreenCtx = offscreen.getContext('2d', { willReadFrequently: true });
+
+// Small canvas for YOLO inference (created once, reused every frame)
+const smallCanvas = document.createElement('canvas');
+const smallCtx = smallCanvas.getContext('2d', { willReadFrequently: true });
 
 // Constants
 const PHONE_CLASS_ID = 67;  // Cell phone in COCO dataset
@@ -106,19 +110,29 @@ async function init() {
         cameraBtn.disabled = true;
         startBtn.disabled = true;
 
+        // Detect mobile and choose appropriate model
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const modelName = isMobile ? 'yolo26n-ONNX' : 'yolo26m-ONNX';
+        const modelDisplay = isMobile ? 'YOLO26n (mobile-optimized)' : 'YOLO26m';
+
+        // Show mobile notice if on mobile
+        if (isMobile) {
+            document.getElementById('mobile-notice').style.display = 'flex';
+        }
+
         // Show loader
-        showLoader('Loading YOLO26m model...');
+        showLoader(`Loading ${modelDisplay} model...`);
         statusText.textContent = 'Loading AI model...';
         statusIndicator.className = 'status-dot loading';
 
         // Load YOLO model with WebGPU
-        model = await AutoModel.from_pretrained('onnx-community/yolo26m-ONNX', {
+        model = await AutoModel.from_pretrained(`onnx-community/${modelName}`, {
             device: 'webgpu',
             dtype: 'fp16'
         });
 
         showLoader('Loading processor...');
-        processor = await AutoProcessor.from_pretrained('onnx-community/yolo26m-ONNX');
+        processor = await AutoProcessor.from_pretrained(`onnx-community/${modelName}`);
 
         // Hide loader
         hideLoader();
@@ -287,13 +301,13 @@ async function detectPhoneAndGetBoxes() {
         const targetWidth = 256;  // Smaller = faster (256 for +5 FPS boost)
         const targetHeight = Math.round((targetWidth / offscreen.width) * offscreen.height);
 
-        // Create smaller canvas for YOLO
-        const smallCanvas = document.createElement('canvas');
-        smallCanvas.width = targetWidth;
-        smallCanvas.height = targetHeight;
-        const smallCtx = smallCanvas.getContext('2d');
+        // Resize small canvas if needed (only on first run or video size change)
+        if (smallCanvas.width !== targetWidth || smallCanvas.height !== targetHeight) {
+            smallCanvas.width = targetWidth;
+            smallCanvas.height = targetHeight;
+        }
 
-        // Draw resized image
+        // Draw resized image (reuse existing canvas)
         offscreenCtx.drawImage(video, 0, 0);
         smallCtx.drawImage(offscreen, 0, 0, targetWidth, targetHeight);
 
