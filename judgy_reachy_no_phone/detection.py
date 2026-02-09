@@ -109,73 +109,85 @@ class PhoneDetector:
 
     def detect_phone_with_tracking(self, frame: np.ndarray) -> list:
         """
-        Detect phone with adaptive confidence and tracking persistence.
+        Detect phone with YOLO's built-in ByteTrack tracking + adaptive confidence.
 
         Returns:
-            List of detection dicts with keys: x1, y1, x2, y2, confidence, class_name
+            List of detection dicts with keys: x1, y1, x2, y2, confidence, class_name, track_id
+
+        NOTE: To revert to custom tracking, see git history or the old implementation
+        that used manual tracking persistence (TRACKING_PERSIST_FRAMES approach).
         """
         if not self._initialized:
             if not self.initialize():
                 return []
 
         try:
-            # Adaptive confidence: lower threshold when tracking existing phone
+            # Adaptive confidence: lower threshold when we have active tracks
             confidence_threshold = (
                 self.TRACKING_CONFIDENCE if self.last_phone_box
                 else self.DETECTION_CONFIDENCE
             )
 
-            # Run YOLO detection with adaptive threshold
-            results = self.yolo_model(frame, verbose=False, conf=confidence_threshold)
+            # Use YOLO's built-in tracker (ByteTrack) instead of manual tracking
+            # persist=True keeps track IDs across frames, tracker="bytetrack.yaml"
+            results = self.yolo_model.track(
+                frame,
+                persist=True,  # Maintain track IDs across frames
+                conf=confidence_threshold,  # Adaptive confidence
+                tracker="bytetrack.yaml",  # ByteTrack algorithm (robust, fast)
+                verbose=False,
+                classes=[self.PHONE_CLASS_ID]  # Only track phones
+            )
             self.last_detections = results  # Save for visualization
 
-            # Find best phone detection (highest confidence)
+            # Collect tracked phones with their IDs
+            new_detections = []
             best_phone = None
             best_score = 0.0
 
             for result in results:
+                if result.boxes is None or len(result.boxes) == 0:
+                    continue
+
                 for box in result.boxes:
                     if int(box.cls) == self.PHONE_CLASS_ID:
                         conf = float(box.conf)
+                        x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-                        # Track the most confident phone
+                        # Get track ID (ByteTrack assigns persistent IDs)
+                        track_id = int(box.id[0]) if box.id is not None else None
+
+                        detection = {
+                            'x1': x1,
+                            'y1': y1,
+                            'x2': x2,
+                            'y2': y2,
+                            'confidence': conf,
+                            'class_name': 'cell phone',
+                            'track_id': track_id
+                        }
+
+                        new_detections.append(detection)
+
+                        # Track the most confident phone for state tracking
                         if conf > best_score:
                             best_score = conf
-                            x1, y1, x2, y2 = map(int, box.xyxy[0])
-                            best_phone = {
-                                'x1': x1,
-                                'y1': y1,
-                                'x2': x2,
-                                'y2': y2,
-                                'confidence': conf,
-                                'class_name': 'cell phone'
-                            }
+                            best_phone = detection
 
-            # Tracking persistence logic
-            new_detections = []
-
+            # Update last_phone_box with the best detection (for adaptive confidence)
             if best_phone:
-                # Phone detected - update tracking
                 self.last_phone_box = best_phone
                 self.frames_without_detection = 0
-                new_detections.append(best_phone)
-
-            elif self.last_phone_box and self.frames_without_detection < self.TRACKING_PERSIST_FRAMES:
-                # No detection but still tracking - persist last known box
-                self.frames_without_detection += 1
-                persisted_box = self.last_phone_box.copy()
-                persisted_box['confidence'] *= 0.9  # Fade confidence
-                new_detections.append(persisted_box)
-
             else:
-                # Lost tracking completely
-                self.last_phone_box = None
-                self.frames_without_detection = 0
+                # ByteTrack handles occlusion, but we still track when we lose all detections
+                self.frames_without_detection += 1
+                if self.frames_without_detection >= self.TRACKING_PERSIST_FRAMES:
+                    self.last_phone_box = None
 
             return new_detections
 
         except Exception as e:
-            logger.debug(f"YOLO detection error: {e}")
+            logger.debug(f"YOLO tracking error: {e}")
             return []
 
     def draw_detections(self, frame: np.ndarray) -> np.ndarray:
@@ -290,4 +302,14 @@ class PhoneDetector:
         self.last_phone_box = None
         self.frames_without_detection = 0
         self.last_reaction_time = 0
+
+        # Reset ByteTrack tracker (clear track IDs)
+        if self.yolo_model and hasattr(self.yolo_model, 'predictor'):
+            try:
+                # This resets the tracker's internal state
+                self.yolo_model.predictor.trackers = []
+                logger.debug("ByteTrack tracker reset")
+            except Exception as e:
+                logger.debug(f"Tracker reset error (non-critical): {e}")
+
         logger.debug("Tracking state reset")
