@@ -115,9 +115,11 @@ async function init() {
         const modelName = isMobile ? 'yolo26n-ONNX' : 'yolo26m-ONNX';
         const modelDisplay = isMobile ? 'YOLO26n (mobile-optimized)' : 'YOLO26m';
 
-        // Show mobile notice if on mobile
+        // Don't load model on mobile (CSS hides demo, shows alternative)
         if (isMobile) {
-            document.getElementById('mobile-notice').style.display = 'flex';
+            console.log('Mobile detected - skipping model load');
+            hideLoader();
+            return;  // Exit early, don't load model
         }
 
         // Show loader
