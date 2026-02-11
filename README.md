@@ -11,6 +11,10 @@ tags:
  - reachy_mini
  - reachy_mini_python_app
  - productivity
+models:
+ - onnx-community/yolo26m-ONNX
+ - Ultralytics/YOLO26
+ - meta-llama/Llama-3.1-8B
 ---
 
 # 📱 Judgy Reachy No Phone 🤖 - Feel free to shame yourself and others!
