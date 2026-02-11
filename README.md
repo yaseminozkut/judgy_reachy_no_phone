@@ -15,6 +15,8 @@ models:
  - onnx-community/yolo26m-ONNX
  - Ultralytics/YOLO26
  - meta-llama/Llama-3.1-8B
+datasets:
+ - pollen-robotics/reachy-mini-emotions-library
 ---
 
 # 📱 Judgy Reachy No Phone 🤖 - Feel free to shame yourself and others!
