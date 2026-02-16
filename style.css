@@ -1002,7 +1002,7 @@ section {
 	}
 
 	/* Hide "Download for Robot" button on mobile */
-	.cta-button-secondary {
+	#download-btn {
 		display: none !important;
 	}
 
@@ -1355,7 +1355,7 @@ section {
 	display: flex;
 	gap: 1rem;
 	margin-top: 2rem;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 }
 
 .cta-button {
@@ -1368,7 +1368,7 @@ section {
 	text-decoration: none;
 	border-radius: 12px;
 	font-weight: 700;
-	font-size: 1.05rem;
+	font-size: 0.9rem;
 	transition: all 0.3s ease;
 	box-shadow: 0 4px 15px rgba(255, 107, 74, 0.3);
 }
@@ -1389,7 +1389,7 @@ section {
 	text-decoration: none;
 	border-radius: 12px;
 	font-weight: 700;
-	font-size: 1.05rem;
+	font-size: 0.9rem;
 	transition: all 0.3s ease;
 }
 
