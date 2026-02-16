@@ -183,6 +183,23 @@ if torch.cuda.is_available():
     # Inference is now 2-3x faster! 🚀
 ```
 
+### **Performance Benchmarks**
+
+Measured on **NVIDIA Tesla T4** (Google Colab) for YOLO26m:
+
+| Backend | Hardware | FPS | Latency | TensorRT Speedup | vs CPU |
+|---------|----------|-----|---------|------------------|--------|
+| **TensorRT** | NVIDIA T4 GPU | **132.7** | 7.5ms | **2.69x** | 121.4x |
+| PyTorch | NVIDIA T4 GPU | 49.4 | 20.3ms | 1.0x | 45.1x |
+| PyTorch | CPU | 1.1 | 914.3ms | - | 1.0x |
+
+**Key Insights:**
+- 🚀 **TensorRT optimization provides 2.69x speedup** over PyTorch on the same NVIDIA GPU
+- ⚡ **NVIDIA GPU acceleration** provides 45x speedup over CPU (PyTorch)
+- 🎯 **Combined effect**: 121x faster than CPU inference
+
+*Real-time phone detection at 132+ FPS enables responsive, sub-8ms reaction times.*
+
 ---
 
 ## 👁️ Computer Vision & Object Tracking
