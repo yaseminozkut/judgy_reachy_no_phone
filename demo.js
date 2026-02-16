@@ -1,5 +1,6 @@
 // Judgy Reachy No Phone - Browser Demo
 // Uses Transformers.js for YOLO detection in the browser
+// WebGPU implementation inspired by: https://huggingface.co/spaces/webml-community/YOLO26-WebGPU
 
 import { AutoModel, AutoProcessor, RawImage } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
 

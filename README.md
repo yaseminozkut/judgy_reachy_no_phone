@@ -61,13 +61,16 @@ Judgy Reachy No Phone combines **NVIDIA-accelerated computer vision**, **LLM-gen
 - **Responds** with personality-matched interventions via 8 distinct AI personalities
 - **Adapts** its reactions based on your offense count and streak performance
 
+> **💎 Built From Scratch:** This is not a fork or modification of existing app. Everything is designed and implemented specifically for this project. 100% original architecture and code.
+
 ---
 
 ## 🚀 Key Features
 
-- **NVIDIA GPU Acceleration**: TensorRT optimization for 2-3x faster inference
+- **NVIDIA Technologies**: TensorRT (2-3x speedup) + ONNX Runtime Web (browser inference)
 - **Advanced Object Tracking**: ByteTrack algorithm with adaptive confidence thresholds
 - **8 AI Personalities**: From Angry Boss to Pure Reachy (robot sounds only)
+- **Browser-Based Demo**: Transformers.js + ONNX Runtime Web with WebGPU/WASM
 - **Multi-Voice TTS**: ElevenLabs premium or Edge TTS free tier
 - **Smart Detection**: Robust phone pickup/putdown with anti-flicker
 - **Behavior Tracking**: Streaks, pickup counts, session stats
@@ -116,13 +119,18 @@ This app is designed to be **100% accessible** regardless of your hardware or bu
 
 This project leverages the full stack of contest technologies:
 
-### ⚡ NVIDIA GPU Acceleration
+### ⚡ NVIDIA Technologies
 
 **TensorRT & CUDA:**
 - **2-3x performance boost** with automatic TensorRT optimization
 - **Auto-detection** of NVIDIA GPUs with CUDA support
-- **FP16 precision** for faster inference
+- **FP16 precision** for faster inference on desktop/laptop
 - **Automatic fallback** to CPU/MPS when GPU unavailable
+
+**ONNX Runtime Web:**
+- **[ONNX Runtime Web](https://onnxruntime.ai/docs/tutorials/web/)** with WebGPU/WASM in browser demo
+- **Browser-side inference** using [Transformers.js](https://huggingface.co/docs/transformers.js) (built on ONNX Runtime)
+- **[ONNX YOLO model](https://huggingface.co/onnx-community/yolo26m-ONNX)** for cross-platform deployment
 
 **→ Detailed technical explanation in [NVIDIA GPU Acceleration](#-nvidia-gpu-acceleration) section below**
 
@@ -716,6 +724,7 @@ This project was built for the **NVIDIA GTC 2026 Golden Ticket Contest**. Contri
 - **Meta**: Llama 3.1-8B model
 - **ElevenLabs**: High-quality TTS voices
 - **Microsoft**: Edge TTS (free tier)
+- **webml-community**: WebGPU demo implementation inspired by [YOLO26-WebGPU](https://huggingface.co/spaces/webml-community/YOLO26-WebGPU)
 
 ### Datasets & Models
 - **Hugging Face**: [pollen-robotics/reachy-mini-emotions-library](https://huggingface.co/datasets/pollen-robotics/reachy-mini-emotions-library)
