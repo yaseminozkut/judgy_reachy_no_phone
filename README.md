@@ -27,6 +27,7 @@ Built for the **NVIDIA GTC 2026 Golden Ticket Contest** in partnership with Poll
 
 [![Demo Video](https://img.shields.io/badge/Watch-Demo-red?style=for-the-badge&logo=youtube)](https://www.linkedin.com/feed/update/urn:li:activity:7420180578961907712/)
 [![Try it Live](https://img.shields.io/badge/Try-Live%20Demo-blue?style=for-the-badge&logo=huggingface)](https://huggingface.co/spaces/yozkut/judgy_reachy_no_phone)
+[![Tech Stack](https://img.shields.io/badge/NVIDIA%20%2B%20Partners-Tech%20Stack-green?style=for-the-badge&logo=nvidia)](#-nvidia-and-partner-technologies-integration)
 
 <div align="center">
 
@@ -111,6 +112,52 @@ This app is designed to be **100% accessible** regardless of your hardware or bu
 
 ---
 
+## 🤝 NVIDIA and Partner Technologies Integration
+
+This project leverages the full stack of contest technologies:
+
+### ⚡ NVIDIA GPU Acceleration
+
+**TensorRT & CUDA:**
+- **2-3x performance boost** with automatic TensorRT optimization
+- **Auto-detection** of NVIDIA GPUs with CUDA support
+- **FP16 precision** for faster inference
+- **Automatic fallback** to CPU/MPS when GPU unavailable
+
+**→ Detailed technical explanation in [NVIDIA GPU Acceleration](#-nvidia-gpu-acceleration) section below**
+
+### 🤗 Hugging Face Ecosystem
+
+**Model Hub & Inference:**
+- **[ONNX YOLO](https://huggingface.co/onnx-community/yolo26m-ONNX)** - Used in web demo via Transformers.js
+- **[Transformers.js](https://huggingface.co/docs/transformers.js)** - Browser-based ML inference (no server needed!)
+
+**Dataset:**
+- **[reachy-mini-emotions-library](https://huggingface.co/datasets/pollen-robotics/reachy-mini-emotions-library)** - Pre-recorded robot emotions for Pure Reachy mode
+
+**Deployment:**
+- **[HF Spaces](https://huggingface.co/spaces/yozkut/judgy_reachy_no_phone)** - Web demo hosting with instant deployment
+- **GitHub Actions → HF Sync** - Automatic synchronization using [custom fork](https://github.com/yaseminozkut/huggingface-sync-action)
+
+### 🤖 Reachy Mini (Pollen Robotics)
+
+**SDK Integration:**
+- Full integration with [Reachy Mini SDK](https://github.com/pollen-robotics/reachy_mini)
+- Supports **Simulation**, **Lite**, and **Wireless** modes
+- Multi-platform installation (macOS, Windows, Linux)
+
+**Robot Capabilities:**
+- **Expressive animations** - Head movements, antenna gestures
+- **Emotion library** - Access to 20+ pre-recorded emotional reactions
+- **Multiple deployment options** - SDK app store, Desktop app, or pip install
+
+**App Store Integration:**
+- One-click install via Reachy Mini dashboard (localhost:8000)
+- Available in [Reachy Mini Desktop App](https://github.com/pollen-robotics/reachy-mini-desktop-app)
+- Community apps distribution
+
+---
+
 ## 🎮 NVIDIA GPU Acceleration
 
 ### **TensorRT Optimization** (2-3x Speed Boost!)
@@ -144,7 +191,9 @@ if torch.cuda.is_available():
 - **Robust to Occlusion**: Maintains track IDs even when phone temporarily hidden
 - **Real-time Performance**: ~100 FPS camera capture, ~33 FPS detection rate
 
-### 🤖 AI-Powered Personality System
+---
+
+## 🤖 AI-Powered Personality System
 
 **8 Distinct Robot Personalities** powered by Meta's **Llama 3.1-8B-instant** (via [Groq](https://console.groq.com) - free API), each with carefully selected Edge TTS and ElevenLabs voices:
 
