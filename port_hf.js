@@ -506,11 +506,27 @@ async function setupRobot() {
             list.innerHTML = '<p class="rv-no-robots">No robots online. Make sure your robot daemon is running and connected.</p>';
             return;
         }
+        let selectedRobotId = null;
+        const connectBtn = document.getElementById('rv-connect-btn');
+        connectBtn.style.display = 'none';
+        connectBtn.onclick = null;
+
         robots.forEach(r => {
+            const name = r.meta?.name || r.id;
+            const n = name.toLowerCase();
+            const mode = n.includes('sim') || n.includes('mockup') ? '🖥 Simulation'
+                       : n.includes('wireless') || n.includes('wifi') ? '📡 Wireless'
+                       : '🔌 Lite';
             const btn = document.createElement('button');
             btn.className = 'rv-robot-btn';
-            btn.innerHTML = `🤖 <strong>${r.name || r.id}</strong><span class="rv-robot-id">${r.id}</span>`;
-            btn.addEventListener('click', () => startSession(r.id));
+            btn.innerHTML = `🤖 <strong>${name}</strong><span class="rv-robot-mode">${mode}</span>`;
+            btn.addEventListener('click', () => {
+                list.querySelectorAll('.rv-robot-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedRobotId = r.id;
+                connectBtn.style.display = '';
+                connectBtn.onclick = () => startSession(selectedRobotId);
+            });
             list.appendChild(btn);
         });
     });

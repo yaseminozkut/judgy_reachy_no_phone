@@ -1991,17 +1991,24 @@ h4, h5, h6, strong {
 	font-family: 'Inter', sans-serif;
 }
 
+.rv-robot-btn.selected {
+	border-color: var(--coral);
+	background: rgba(255, 107, 74, 0.08);
+}
+
 .rv-robot-btn:hover {
 	border-color: var(--coral);
 	box-shadow: 0 4px 16px rgba(255,107,74,0.15);
 	transform: translateY(-1px);
 }
 
-.rv-robot-id {
+.rv-robot-mode {
 	margin-left: auto;
 	font-size: 0.75rem;
 	color: var(--text-muted);
-	font-family: monospace;
+	background: rgba(255,255,255,0.06);
+	padding: 0.2rem 0.5rem;
+	border-radius: 100px;
 }
 
 .rv-no-robots {
