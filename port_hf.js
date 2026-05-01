@@ -499,7 +499,7 @@ async function setupRobot() {
     robot = new ReachyMini({ appName: 'judgy-reachy-no-phone' });
 
     robot.addEventListener('robotsChanged', e => {
-        const robots = e.detail;
+        const robots = e.detail?.robots ?? e.detail;
         const list = document.getElementById('rv-robot-list');
         list.innerHTML = '';
         if (!robots.length) {
