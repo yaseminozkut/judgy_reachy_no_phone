@@ -5,6 +5,7 @@ colorFrom: red
 colorTo: purple
 sdk: static
 pinned: false
+hf_oauth: true
 license: apache-2.0
 short_description: Robot shames you for phone addiction with AI vision
 tags:
