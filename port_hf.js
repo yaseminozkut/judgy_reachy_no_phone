@@ -496,7 +496,7 @@ function openVoiceModal(pKey) {
 
 // ─── Robot connection ─────────────────────────────────────────────────────────
 async function setupRobot() {
-    robot = new ReachyMini({ appName: 'judgy-reachy-no-phone' });
+    robot = new ReachyMini({ appName: 'judgy-reachy-no-phone', enableMicrophone: false });
 
     robot.addEventListener('robotsChanged', e => {
         const robots = e.detail?.robots ?? e.detail;
