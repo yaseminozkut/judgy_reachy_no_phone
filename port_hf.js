@@ -510,14 +510,13 @@ async function setupRobot() {
             const btn = document.createElement('button');
             btn.className = 'rv-robot-btn';
             btn.innerHTML = `🤖 <strong>${r.name || r.id}</strong><span class="rv-robot-id">${r.id}</span>`;
-            btn.addEventListener('click', () => startSession(r.id, r.name || r.id));
+            btn.addEventListener('click', () => startSession(r.id));
             list.appendChild(btn);
         });
     });
 
     robot.addEventListener('streaming', async () => {
         isStreaming = true;
-        await robot.ensureAwake();
         const videoEl = document.getElementById('rv-video');
         detachVideo = robot.attachVideo(videoEl);
         showRVState('rv-monitoring');
@@ -540,8 +539,13 @@ async function setupRobot() {
     robot.addEventListener('error', e => console.error('Robot error:', e));
 }
 
-async function startSession(robotId, robotName) {
-    await robot.startSession(robotId);
+async function startSession(robotId) {
+    if (!robot || robot.state !== 'connected') return;
+    try {
+        await robot.startSession(robotId);
+    } catch (e) {
+        console.error('startSession failed:', e);
+    }
 }
 
 function stopMonitoring() {
