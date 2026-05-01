@@ -1177,13 +1177,18 @@ section {
 	aspect-ratio: 4/3;
 }
 
-#webcam, #canvas {
+#webcam, #canvas, #rv-video, #rv-canvas {
 	position: absolute;
 	top: 0;
 	left: 0;
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+}
+
+#rv-canvas {
+	z-index: 2;
+	background: transparent;
 }
 
 #canvas {
@@ -2415,7 +2420,7 @@ h4, h5, h6, strong {
 
 @media (min-width: 901px) {
 	.rv-personality-toggle { display: none; }
-	.rv-personality-collapsible { display: contents; }
+	.rv-personality-collapsible { display: flex; flex-direction: column; gap: 0.5rem; }
 }
 
 .rv-panel-title { font-size: 1.1rem; font-weight: 700; }

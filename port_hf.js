@@ -534,6 +534,8 @@ async function setupRobot() {
     robot.addEventListener('streaming', async () => {
         isStreaming = true;
         showRVState('rv-monitoring');
+        const placeholder = document.getElementById('rv-video-placeholder');
+        if (placeholder) placeholder.style.display = 'none';
         populatePersonalities();
         startStreakTimer();
         if (!rvModel) await initModel();
@@ -543,6 +545,8 @@ async function setupRobot() {
         isStreaming = false;
         stopMonitoring();
         if (detachVideo) { detachVideo(); detachVideo = null; }
+        const placeholder = document.getElementById('rv-video-placeholder');
+        if (placeholder) placeholder.style.display = '';
         showRVState('rv-picker');
     });
 
