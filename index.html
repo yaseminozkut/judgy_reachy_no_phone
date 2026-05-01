@@ -20,11 +20,11 @@
 			</div>
 
 			<nav class="nav">
-				<a href="#demo" class="nav-link">Try Demo</a>
-				<a href="#setup" class="nav-link">Quick Setup</a>
-				<a href="#config" class="nav-link">Config</a>
-				<a href="#personalities" class="nav-link">Personalities</a>
-				<a href="#features" class="nav-link">Features</a>
+				<a href="#demo" class="nav-link" id="nav-demo">Try Demo</a>
+				<a href="#setup" class="nav-link" id="nav-setup">Quick Setup</a>
+				<a href="#config" class="nav-link" id="nav-config">Config</a>
+				<a href="#personalities" class="nav-link" id="nav-personalities">Personalities</a>
+				<a href="#features" class="nav-link" id="nav-features">Features</a>
 			</nav>
 
 			<a href="https://github.com/yaseminozkut/judgy_reachy_no_phone" class="github-btn" target="_blank">
@@ -36,6 +36,15 @@
 		</div>
 	</header>
 
+	<!-- Mode toggle bar -->
+	<div class="mode-toggle-bar">
+		<div class="mode-toggle">
+			<button class="toggle-option active" id="toggle-info">Info</button>
+			<button class="toggle-option" id="toggle-robot">🤖 Connect Robot</button>
+		</div>
+	</div>
+
+	<div id="info-view">
 	<!-- Hero Section -->
 	<section class="hero-section">
 		<div class="container">
@@ -445,8 +454,198 @@
 		</div>
 	</footer>
 
+	</div><!-- end info-view -->
+
+	<!-- Robot View -->
+	<div id="robot-view" style="display:none">
+		<div class="container rv-container">
+
+			<!-- State 1: Sign in -->
+			<div id="rv-signin" class="rv-state">
+				<div class="rv-connect-card">
+					<div class="rv-connect-icon">🤖</div>
+					<h2 class="rv-connect-title">Connect your Reachy Mini</h2>
+					<p class="rv-connect-desc">Sign in with Hugging Face to connect your robot and start monitoring</p>
+					<button id="rv-signin-btn" class="cta-button">Sign in with Hugging Face 🤗</button>
+				</div>
+			</div>
+
+			<!-- State 2: Robot picker -->
+			<div id="rv-picker" class="rv-state" style="display:none">
+				<div class="rv-picker-header">
+					<h2 class="rv-picker-title">Select Your Robot</h2>
+					<p class="rv-picker-sub">Your online robots appear below</p>
+				</div>
+				<div id="rv-robot-list" class="rv-robot-list"></div>
+			</div>
+
+			<!-- State 3: Monitoring UI -->
+			<div id="rv-monitoring" class="rv-state" style="display:none">
+
+				<!-- Top bar: robot name + gear + disconnect -->
+				<div class="rv-topbar">
+					<div class="rv-topbar-left">
+						<span id="rv-robot-badge" class="rv-badge">🟢 Connected</span>
+					</div>
+					<div class="rv-topbar-right">
+						<button id="rv-settings-btn" class="btn-icon-sm">⚙️</button>
+						<button id="rv-disconnect-btn" class="btn-icon-sm btn-danger-sm">✕ Disconnect</button>
+					</div>
+				</div>
+
+				<!-- Main grid -->
+				<div class="rv-grid">
+
+					<!-- Left column: status + camera + controls + stats -->
+					<div class="rv-camera-col">
+
+						<!-- 3-part status bar (matches original) -->
+						<div class="rv-status-bar">
+							<div class="rv-status-badge">
+								<span id="rv-detect-dot" class="status-dot"></span>
+								<span id="rv-detect-text">Not Monitoring</span>
+							</div>
+							<div id="rv-tech-badge" class="rv-tech-badge">Emotion sounds</div>
+							<div class="rv-mode-badge">Mode: <span id="rv-mode-name">Pure Reachy</span></div>
+						</div>
+
+						<!-- Camera -->
+						<div class="video-wrapper">
+							<video id="rv-video" autoplay playsinline muted></video>
+							<canvas id="rv-canvas"></canvas>
+							<div id="rv-video-placeholder" class="video-placeholder">
+								<svg class="camera-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+									<path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/>
+									<line x1="1" y1="1" x2="23" y2="23"/>
+								</svg>
+								<div class="camera-status">Camera Inactive</div>
+								<div class="camera-message">Waiting for robot camera feed…</div>
+							</div>
+							<div id="rv-loader" class="loader-overlay">
+								<div class="spinner"></div>
+								<p id="rv-loader-text">Loading AI model...</p>
+							</div>
+							<div class="fps-counter"><span id="rv-fps">0</span> FPS</div>
+						</div>
+
+						<!-- Controls -->
+						<div class="demo-controls">
+							<button id="rv-toggle-btn" class="btn-demo btn-primary">▶️ Start Monitoring</button>
+							<button id="rv-test-btn" class="btn-demo btn-secondary">⚡ Test</button>
+						</div>
+
+						<!-- Stats row -->
+						<div class="rv-stats">
+							<div class="rv-stat-card" style="border-color: var(--coral)">
+								<div class="rv-stat-value" id="rv-stat-count">0</div>
+								<div class="rv-stat-label">BUSTED BY REACHY</div>
+							</div>
+							<div class="rv-stat-card" style="border-color: var(--sky)">
+								<div class="rv-stat-value" id="rv-stat-streak">0s</div>
+								<div class="rv-stat-label">CURRENT STREAK</div>
+							</div>
+							<div class="rv-stat-card" style="border-color: var(--lavender)">
+								<div class="rv-stat-value" id="rv-stat-longest">0s</div>
+								<div class="rv-stat-label">LONGEST STREAK</div>
+							</div>
+						</div>
+
+						<!-- Reset (hidden until first bust) -->
+						<div id="rv-reset-section" style="display:none">
+							<button id="rv-reset-btn" class="btn-demo btn-secondary" style="width:100%">🔄 Reset Stats</button>
+						</div>
+
+						<div class="response-box">
+							<div class="response-label">💬 Latest response:</div>
+							<div id="rv-response-text" class="response-text">Start monitoring to begin</div>
+						</div>
+					</div>
+
+					<!-- Right column: personality panel -->
+					<div class="rv-control-col">
+						<div class="rv-personality-panel" id="rv-personality-panel">
+							<h2 class="rv-panel-title">🤖 Robot Personality</h2>
+							<p class="rv-panel-subtitle">Choose how the robot judges you</p>
+
+							<!-- Mobile-only collapse toggle -->
+							<button class="rv-personality-toggle" id="rv-personality-toggle">
+								<span class="rv-personality-toggle-hint">Choose Personality</span>
+								<span id="rv-personality-toggle-label">🤖 Pure Reachy</span>
+								<span class="rv-personality-chevron">▼</span>
+							</button>
+
+							<div class="rv-personality-collapsible" id="rv-personality-collapsible">
+							<div id="rv-api-notice" class="rv-api-notice">
+								<div class="notice-icon">💡</div>
+								<div>
+									<strong>Using Pre-written Lines</strong><br>
+									<span class="notice-small">Add Groq API key in ⚙️ settings for AI responses</span>
+								</div>
+							</div>
+
+							<div id="rv-personalities" class="rv-personality-list"></div>
+							</div><!-- end rv-personality-collapsible -->
+						</div>
+					</div>
+				</div>
+
+				<!-- Settings modal -->
+				<div id="rv-settings-modal" class="modal-backdrop" style="display:none">
+					<div class="modal-box">
+						<div class="modal-header">
+							<h3>⚙️ Settings</h3>
+							<button class="modal-close" id="rv-settings-close">✕</button>
+						</div>
+						<div class="modal-body">
+							<label class="modal-label">Groq API Key (optional)</label>
+							<input id="rv-set-groq" type="password" class="modal-input" placeholder="gsk_...">
+							<p class="modal-hint">Free at <a href="https://console.groq.com" target="_blank">console.groq.com</a> — enables dynamic LLM responses</p>
+
+							<label class="modal-label">ElevenLabs API Key (optional)</label>
+							<input id="rv-set-eleven" type="password" class="modal-input" placeholder="sk_...">
+							<p class="modal-hint">Free tier at <a href="https://elevenlabs.io" target="_blank">elevenlabs.io</a> — premium voices</p>
+
+							<label class="modal-label">Cooldown between shames: <span id="rv-set-cooldown-val">10s</span></label>
+							<input id="rv-set-cooldown" type="range" min="10" max="120" value="10" step="5" class="modal-range">
+
+							<label class="modal-checkbox-label">
+								<input id="rv-set-praise" type="checkbox" checked> Praise when phone is put down
+							</label>
+						</div>
+						<div class="modal-footer">
+							<button id="rv-settings-save" class="cta-button">✓ Done</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Voice modal (per-personality) -->
+				<div id="rv-voices-modal" class="modal-backdrop" style="display:none">
+					<div class="modal-box">
+						<div class="modal-header">
+							<h3 id="rv-voice-modal-title">Voice Settings</h3>
+							<button class="modal-close" id="rv-voices-close">✕</button>
+						</div>
+						<div class="modal-body">
+							<label class="modal-label">ElevenLabs Voice ID</label>
+							<input id="rv-voice-eleven" type="text" class="modal-input" placeholder="Leave empty for default">
+							<p class="modal-hint" id="rv-voice-eleven-hint"></p>
+
+							<label class="modal-label">Web Speech Voice Name</label>
+							<input id="rv-voice-edge" type="text" class="modal-input" placeholder="Leave empty for default">
+						</div>
+						<div class="modal-footer">
+							<button id="rv-voices-save" class="cta-button">✓ Save</button>
+						</div>
+					</div>
+				</div>
+
+			</div><!-- end rv-monitoring -->
+		</div><!-- end rv-container -->
+	</div><!-- end robot-view -->
+
 	<!-- Demo JavaScript -->
 	<script type="module" src="demo.js"></script>
+	<script type="module" src="port_hf.js"></script>
 </body>
 
 </html>
