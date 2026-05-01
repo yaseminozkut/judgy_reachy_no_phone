@@ -533,8 +533,6 @@ async function setupRobot() {
 
     robot.addEventListener('streaming', async () => {
         isStreaming = true;
-        const videoEl = document.getElementById('rv-video');
-        detachVideo = robot.attachVideo(videoEl);
         showRVState('rv-monitoring');
         populatePersonalities();
         startStreakTimer();
@@ -558,9 +556,12 @@ async function setupRobot() {
 async function startSession(robotId) {
     if (!robot || robot.state !== 'connected') return;
     try {
+        const videoEl = document.getElementById('rv-video');
+        detachVideo = robot.attachVideo(videoEl);
         await robot.startSession(robotId);
     } catch (e) {
         console.error('startSession failed:', e);
+        if (detachVideo) { detachVideo(); detachVideo = null; }
     }
 }
 
