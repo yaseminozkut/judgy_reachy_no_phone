@@ -648,6 +648,10 @@ async function setupRobot() {
 
     robot.addEventListener('streaming', async () => {
         isStreaming = true;
+        // In simulation the robot's WebRTC track may auto-attach; restore webcam
+        if (isSimulation && webcamStream) {
+            document.getElementById('rv-video').srcObject = webcamStream;
+        }
         showRVState('rv-monitoring');
         const placeholder = document.getElementById('rv-video-placeholder');
         if (placeholder) placeholder.style.display = 'none';
