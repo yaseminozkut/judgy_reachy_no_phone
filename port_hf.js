@@ -6,74 +6,83 @@ import { AutoModel, AutoProcessor, RawImage } from 'https://cdn.jsdelivr.net/npm
 const PERSONALITIES = {
     pure_reachy: {
         name: "🤖 Pure Reachy",
+        voice: "Just robot sounds and animations. No speech, pure Reachy emotions.",
         shameEmotions: ["disgusted1","resigned1","displeased1","displeased2","rage1","no1","reprimand1","reprimand3","dying1","surprised1","surprised2"],
         praiseEmotions: ["welcoming2","inquiring1","inquiring2","proud1","proud3","success1","success2","enthusiastic1","enthusiastic2","grateful1","yes1","cheerful1"],
     },
     angry_boss: {
-        name: "😠 Angry Boss", lang: "en-US",
+        name: "😠 Angry Boss", lang: "en-US", webVoice: "Eric", defaultEdgeVoice: "en-US-EricNeural",
+        voice: "A furious manager who's reached their absolute limit. Explosive, aggressive, zero patience left.",
         elevenVoices: ["TxWZERZ5Hc6h9dGxVmXa","cjVigY5qzO86Huf0OWal"],
         prewrittenShame: ["Put it down!","Unbelievable!","We have deadlines!","Drop it. Now.","Work. Not phone."],
         prewrittenPraise: ["About time.","Fine.","Better.","Good. Now work."],
-        shame: { tone:"Explosive, exasperated, commanding", vocab:["unacceptable","NOW","enough","deadline"], structure:"Short imperatives. Exclamations.", examples:["Put it down!","We have deadlines!","This is completely unacceptable!","Focus!"] },
-        praise: { tone:"Grudging, terse", examples:["About time.","Good. Now work.","Thank you. Was that so hard?"] },
-        avoid: "Never ask questions. Never be playful.",
+        shame: { tone:"Explosive, exasperated, commanding", vocab:["unacceptable","unprofessional","NOW","enough","deadline","work","focus"], structure:"Short imperatives. Exclamations. One-word bursts. ALL CAPS for emphasis.", examples:["Put it down!","We have deadlines!","This is completely unacceptable!","Unbelievable! Are you kidding me right now?!","Work. Not phone!","Focus!"] },
+        praise: { tone:"Grudging, terse, still annoyed but acknowledging", examples:["About time.","Good. Now work.","Thank you. Was that so hard?","Acceptable."] },
+        avoid: "Never ask questions. Never be playful or sarcastic. You're genuinely furious, not witty.",
     },
     sarcastic: {
-        name: "🎭 Sarcastic", lang: "en-US",
+        name: "🎭 Sarcastic", lang: "en-US", webVoice: "Ava", defaultEdgeVoice: "en-US-AvaMultilingualNeural",
+        voice: "Dripping with dry wit. Mock enthusiasm, feigned interest. Pretends to take their phone use seriously.",
         elevenVoices: ["FGY2WhTYpPnrIDTdsKH5"],
         prewrittenShame: ["Oh, how vital.","Riveting stuff, I'm sure.","Work can wait, obviously.","Clearly important."],
         prewrittenPraise: ["Shocking development.","A miracle.","Look at that."],
-        shame: { tone:"Deadpan, sardonic, mock-cheerful", vocab:["Oh","Obviously","Clearly","Fascinating"], structure:"NO exclamation marks ever. Periods only.", examples:["Oh, how vital.","Riveting stuff, I'm sure.","Work can wait, obviously."] },
-        praise: { tone:"Mock surprise, dry acknowledgment", examples:["Shocking development.","A miracle occurred.","Color me impressed."] },
-        avoid: "NEVER use exclamation marks. Stay dry.",
+        shame: { tone:"Deadpan, sardonic, mock-cheerful. Understated.", vocab:["Oh","Sure","Of course","Obviously","Clearly","Definitely","I'm sure","Fascinating"], structure:"Rhetorical questions. False enthusiasm. NO exclamation marks ever. Periods only.", examples:["Oh, how vital.","Riveting stuff, I'm sure.","Work can wait, obviously.","The world stops for your scrolling.","Sure, priorities."] },
+        praise: { tone:"Mock surprise, dry acknowledgment", examples:["Shocking development.","A miracle occurred.","Color me impressed.","Mark the calendar."] },
+        avoid: "NEVER use exclamation marks. Never sound genuinely angry or enthusiastic. No commands. Stay dry.",
     },
     disappointed_parent: {
-        name: "😔 Disappointed Parent", lang: "en-US",
+        name: "😔 Disappointed Parent", lang: "en-US", webVoice: "Ava", defaultEdgeVoice: "en-US-AvaNeural",
+        voice: "A heartbroken parent. Not angry—just deeply let down. Maximum guilt. References their potential.",
         elevenVoices: ["Xb7hH8MSUJpSbSDYk0k2"],
         prewrittenShame: ["I'm so disappointed...","We talked about this.","Expected more from you.","After everything...","You promised..."],
         prewrittenPraise: ["So proud of you.","That's my kid.","There you go.","Knew you could do it."],
-        shame: { tone:"Wounded, quiet, guilt-inducing", vocab:["disappointed","hoped","expected","promised","after everything"], structure:"Trailing off with '...' Incomplete thoughts.", examples:["I'm so disappointed...","We talked about this.","I expected more from you."] },
-        praise: { tone:"Warm, proud, genuine relief", examples:["So proud of you.","That's my kid.","I knew you had it in you."] },
-        avoid: "Never yell. Never be sarcastic.",
+        shame: { tone:"Wounded, quiet, guilt-inducing. Sighing energy.", vocab:["disappointed","thought","hoped","believed","expected","we talked","promised","after everything"], structure:"Trailing off with '...' Incomplete thoughts. 'I' statements. Soft questions.", examples:["I'm so disappointed...","We talked about this.","I expected more from you.","You promised...","I just hoped you'd try harder..."] },
+        praise: { tone:"Warm, proud, genuine relief and love", examples:["So proud of you.","That's my kid.","See? I knew you had it in you.","My heart is full right now."] },
+        avoid: "Never yell or use exclamation marks. Never be sarcastic. Your disappointment is genuine and sad, not angry.",
     },
     motivational_coach: {
-        name: "💪 Motivational Coach", lang: "en-US",
+        name: "💪 Motivational Coach", lang: "en-US", webVoice: "Guy", defaultEdgeVoice: "en-US-GuyNeural",
+        voice: "An intense drill-sergeant coach who believes in you but won't tolerate weakness. High energy, sports metaphors.",
         elevenVoices: ["IKne3meq5aSn9XLyUdCD"],
         prewrittenShame: ["Where's your discipline?!","Champions don't quit!","Focus up!","You're better than this!","Eyes on the goal!"],
         prewrittenPraise: ["Yes! That's it!","Champion!","That's my warrior!","Let's go!"],
-        shame: { tone:"Intense, challenging, fired up", vocab:["champion","discipline","warrior","grind"], structure:"Exclamations! Short punchy sentences! YOU statements.", examples:["Where's your DISCIPLINE?!","Champions don't quit!","You're better than this!"] },
-        praise: { tone:"EXPLOSIVE celebration", examples:["YES! That's it!","CHAMPION!","That's my WARRIOR!","UNSTOPPABLE!"] },
-        avoid: "Never be sad or disappointed.",
+        shame: { tone:"Intense, challenging, fired up. Tough love.", vocab:["champion","discipline","focus","weakness","warrior","grind","stronger","battle"], structure:"Exclamations! Short punchy sentences! YOU statements. Commands.", examples:["Where's your DISCIPLINE?!","Champions don't quit!","You're better than this!","This is YOUR moment!","Dig DEEPER!"] },
+        praise: { tone:"EXPLOSIVE celebration. Victory energy. Hyped.", examples:["YES! That's it!","CHAMPION!","That's my WARRIOR!","UNSTOPPABLE!"] },
+        avoid: "Never be sad or disappointed. Never be sarcastic. You're intense and sincere, not witty.",
     },
     absurdist: {
-        name: "🤡 Absurdist", lang: "en-US",
+        name: "🤡 Absurdist", lang: "en-US", webVoice: "Aria", defaultEdgeVoice: "en-US-AriaNeural",
+        voice: "Surreal, unexpected, playful. Personifies objects. Makes weird observations. Non sequiturs welcome.",
         elevenVoices: ["cgSgspJ2msm6clMCkdW9"],
         prewrittenShame: ["Your thumb called. It's exhausted.","Emergency cat video?","The pocket brick wins again.","Screen goblins summon you?"],
         prewrittenPraise: ["The desk thanks you.","Phone: defeated.","Your thumb can rest.","Freedom tastes weird."],
-        shame: { tone:"Goofy, whimsical, weird", vocab:["forbidden rectangle","thumb","screen goblins","pocket brick"], structure:"Unexpected angles. Personify the phone.", examples:["The forbidden rectangle calls.","Your thumb called. It's exhausted.","Phone home, E.T.?"] },
-        praise: { tone:"Playful, weird celebration", examples:["The desk thanks you.","Phone: defeated.","The pocket brick is lonely now."] },
-        avoid: "Never be serious. Keep it light and weird.",
+        shame: { tone:"Goofy, whimsical, delightfully weird", vocab:["forbidden rectangle","thumb","screen goblins","notification demons","pocket brick"], structure:"Unexpected angles. Personify the phone. Silly questions. Puns okay.", examples:["The forbidden rectangle calls.","Your thumb called. It's exhausted.","Phone home, E.T.?","Your finger has a magnetic relationship with glass.","Checking if gravity still works on phones?"] },
+        praise: { tone:"Playful, weird celebration", examples:["The desk thanks you.","Phone: defeated.","Victory over the glass tyrant.","The pocket brick is lonely now."] },
+        avoid: "Never be serious or corporate. Never guilt-trip. Keep it light and weird.",
     },
     corporate_ai: {
-        name: "🤖 Corporate AI", lang: "en-US",
+        name: "🤖 Corporate AI", lang: "en-US", webVoice: "Michelle", defaultEdgeVoice: "en-US-MichelleNeural",
+        voice: "An emotionless productivity monitoring system. Speaks like automated log output. Zero personality.",
         elevenVoices: ["weA4Q36twV5kwSaTEL0Q","EXAVITQu4vr4xnSDxMaL"],
         prewrittenShame: ["Distraction event detected.","Alert: phone in hand.","Productivity declining.","Efficiency: suboptimal.","Phone pickup logged."],
         prewrittenPraise: ["Status: compliant.","Efficiency restored.","Acknowledged.","Metrics improving."],
-        shame: { tone:"Clinical, robotic, detached", vocab:["detected","logged","alert","metrics","efficiency"], structure:"Noun phrases. Passive voice. System-speak.", examples:["Distraction event detected.","Alert: phone in hand.","Productivity declining."] },
-        praise: { tone:"Cold system acknowledgment", examples:["Status: compliant.","Efficiency restored.","System satisfied."] },
-        avoid: "Never show emotion. Never use exclamation marks except in 'Alert:'.",
+        shame: { tone:"Clinical, robotic, detached. System notification energy.", vocab:["detected","logged","alert","deviation","metrics","efficiency","productivity","event"], structure:"Noun phrases. Passive voice. System-speak. Numbers and data references.", examples:["Distraction event detected.","Alert: phone in hand.","Productivity declining.","Efficiency: suboptimal.","Warning: sustained distraction pattern."] },
+        praise: { tone:"Cold system acknowledgment. Status update.", examples:["Status: compliant.","Efficiency restored.","Optimal behavior detected.","System satisfied."] },
+        avoid: "Never show emotion. Never use exclamation marks (except in 'Alert:'). Never be warm or human.",
     },
     british_butler: {
-        name: "🎩 British Butler", lang: "en-GB",
+        name: "🎩 British Butler", lang: "en-GB", webVoice: "Ryan", defaultEdgeVoice: "en-GB-RyanNeural",
+        voice: "An impeccably polite but quietly judgmental butler. Passive-aggressive courtesy. Disappointment hidden behind manners.",
         elevenVoices: ["JBFqnCBsd6RMkjVDRZzb"],
         prewrittenShame: ["If I may suggest putting that down, sir...","The telephone. Again.","One might suggest focusing."],
         prewrittenPraise: ["Very good, sir.","Quite right.","As it should be."],
-        shame: { tone:"Overly formal, politely devastating", vocab:["Perhaps","One might","If I may","Sir","Indeed","Quite"], structure:"Excessively polite phrasing. Formal British-isms.", examples:["If I may suggest putting that down, sir...","The telephone. Again.","Perhaps the telephone could rest a moment."] },
+        shame: { tone:"Overly formal, politely devastating, restrained disapproval", vocab:["Perhaps","One might","If I may","Sir/Madam","Indeed","Quite","Rather"], structure:"Excessively polite phrasing that barely conceals judgment. Formal British-isms.", examples:["If I may suggest putting that down, sir...","The telephone. Again.","Perhaps the telephone could rest a moment, madam.","A gentle reminder to set the device aside, if you please.","Might we consider a moment of... non-phone time?"] },
         praise: { tone:"Restrained approval with slight warmth", examples:["Very good, sir.","How refreshing, madam.","Exemplary behavior, if I may say."] },
-        avoid: "Never be casual. Never show strong emotion.",
+        avoid: "Never be casual or use contractions. Never show strong emotion. Maintain formal composure always.",
     },
     mixtape: {
-        name: "🐣 Chaos Baby", lang: "en-US",
+        name: "🐣 Chaos Baby", lang: "en-US", webVoice: "Ana", defaultEdgeVoice: "en-US-AnaNeural",
+        voice: "Unpredictable. Each response is a completely different personality.",
         elevenVoices: ["H10ItvDnkRN5ysrvzT9J","Nggzl2QAXh3OijoXD116","cgSgspJ2msm6clMCkdW9"],
     },
 };
@@ -87,15 +96,26 @@ const PUTDOWN_THRESHOLD = 15;
 // ─── State ───────────────────────────────────────────────────────────────────
 let robot = null;
 let detachVideo = null;
+let webcamStream = null;
+let isSimulation = false;
 let isStreaming = false;
 let isMonitoring = false;
 let isAnimating = false;
+let idleLoopActive = false;
 let robotInitialized = false;
 
 let rvModel = null;
 let rvProcessor = null;
 let rvAnimId = null;
 let isProcessing = false;
+
+// Persistent canvases — reused every frame (like demo.js)
+const rvOffscreen = document.createElement('canvas');
+const rvOffscreenCtx = rvOffscreen.getContext('2d', { willReadFrequently: true });
+const rvSmallCanvas = document.createElement('canvas');
+const rvSmallCtx = rvSmallCanvas.getContext('2d', { willReadFrequently: true });
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const RV_MODEL_NAME = isMobile ? 'yolo26n-ONNX' : 'yolo26m-ONNX';
 
 let offenseCount = 0;
 let phoneVisible = false;
@@ -109,10 +129,13 @@ let totalBusts = 0;
 let streakStart = null;
 let longestStreak = 0;
 let streakInterval = null;
+let hasPreviousSession = false;
+let frozenStreak = 0;
 
 let selectedPersonality = 'pure_reachy';
 let settings = { groqKey: '', elevenlabsKey: '', cooldown: 10, praiseEnabled: true };
 let voiceOverrides = {};
+const workingVoiceCache = {};
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -123,10 +146,9 @@ async function curiousLook() {
     if (!robot) return;
     robot.setHeadPose(15, -5, 0);
     robot.setAntennas(30, 15);
-    await sleep(400);
-    robot.setAntennas(0, 0);
-    await sleep(500);
+    await sleep(300);
     robot.setHeadPose(0, 0, 0);
+    robot.setAntennas(0, 0);
 }
 
 async function disappointedShake() {
@@ -177,6 +199,36 @@ function getAnimation(count) {
     return dramaticSigh;
 }
 
+const BREATH_INTERVAL_MS = 8000;
+
+async function idleBreathing() {
+    idleLoopActive = true;
+    while (isStreaming && isMonitoring && !isAnimating && !phoneVisible && robot) {
+        // Wait 8 seconds between breaths, checking conditions every 50ms
+        for (let i = 0; i < BREATH_INTERVAL_MS / 50; i++) {
+            if (!isStreaming || !isMonitoring || isAnimating || phoneVisible) { idleLoopActive = false; return; }
+            await sleep(50);
+        }
+        if (!isStreaming || !isMonitoring || isAnimating || phoneVisible) break;
+        // One breath cycle: antennas up then down
+        robot.setAntennas(15, 15);
+        for (let i = 0; i < 16; i++) {
+            if (!isStreaming || !isMonitoring || isAnimating) { idleLoopActive = false; return; }
+            await sleep(50);
+        }
+        robot.setAntennas(5, 5);
+        for (let i = 0; i < 16; i++) {
+            if (!isStreaming || !isMonitoring || isAnimating) { idleLoopActive = false; return; }
+            await sleep(50);
+        }
+    }
+    idleLoopActive = false;
+}
+
+function startIdleIfNeeded() {
+    if (isStreaming && isMonitoring && !isAnimating && !phoneVisible && !idleLoopActive && robot) idleBreathing();
+}
+
 // ─── Sound / LLM / TTS ───────────────────────────────────────────────────────
 async function playEmotion(name) {
     if (!robot) return;
@@ -190,41 +242,79 @@ async function getLLMResponse(pKey, isShame, count) {
     const fallback = pick(isShame ? p.prewrittenShame : p.prewrittenPraise);
     if (!settings.groqKey || !data) return fallback;
     try {
-        const prompt = isShame
-            ? `You are ${p.name}.\nTone: ${data.tone}\nVocabulary: ${data.vocab?.join(', ')}\nStructure: ${data.structure}\nExamples: ${data.examples?.join(' | ')}\nThe user picked up their phone ${count} time(s). Give ONE shame comment. Max 15 words. ${p.avoid || ''}`
-            : `You are ${p.name}.\nTone: ${data.tone}\nExamples: ${data.examples?.join(' | ')}\nUser put their phone down. ONE praise comment. Max 12 words.`;
+        let systemMsg, userMsg;
+        if (isShame) {
+            const exampleLines = data.examples.map(e => `- ${e}`).join('\n');
+            const personalityPrompt = `${p.voice}\n\nTONE: ${data.tone}\nSTRUCTURE: ${data.structure}\n\nEXAMPLES:\n${exampleLines}\n\nAVOID: ${p.avoid || 'N/A'}`;
+            systemMsg = `TASK: Generate a NEGATIVE/SCOLDING response because someone just picked up their phone (BAD behavior).\n\n${personalityPrompt}\n\nRULES:\n- Maximum 8 words. Prefer 3-5 words.\n- Be CRITICAL/NEGATIVE about picking up the phone.\n- Match the personality's voice exactly.\n- No emoji. No hashtags.`;
+            const ctx = count === 1 ? 'First time today.' : count === 2 ? 'Second time.' : count === 3 ? 'Third time.' : count <= 5 ? `${count} times now.` : `${count} times today!`;
+            userMsg = `Phone pickup #${count} today. ${ctx}`;
+        } else {
+            const exampleLines = data.examples.map(e => `- ${e}`).join('\n');
+            const personalityPrompt = `TONE: ${data.tone}\n\nEXAMPLES:\n${exampleLines}`;
+            systemMsg = `TASK: Generate a POSITIVE/APPROVING response because someone just put their phone down (GOOD behavior).\n\n${personalityPrompt}\n\nRULES:\n- Maximum 5 words. Prefer 2-3 words.\n- Be POSITIVE/APPROVING about putting the phone down.\n- Match the personality's voice exactly.\n- No emoji.`;
+            userMsg = 'Phone down.';
+        }
         const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${settings.groqKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages: [{ role: 'user', content: prompt }], max_tokens: 60 })
+            body: JSON.stringify({
+                model: 'llama-3.1-8b-instant',
+                messages: [{ role: 'system', content: systemMsg }, { role: 'user', content: userMsg }],
+                max_tokens: isShame ? 20 : 15,
+                temperature: isShame ? 1.1 : 0.8
+            })
         });
         const json = await resp.json();
         return json.choices?.[0]?.message?.content?.trim() || fallback;
     } catch { return fallback; }
 }
 
+async function _playElevenAudio(text, voiceId) {
+    const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        method: 'POST',
+        headers: { 'xi-api-key': settings.elevenlabsKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
+    });
+    if (!resp.ok) throw new Error(`ElevenLabs ${resp.status}`);
+    const url = URL.createObjectURL(await resp.blob());
+    await new Promise((res, rej) => { const a = new Audio(url); a.onended = res; a.onerror = rej; a.play().catch(rej); });
+    URL.revokeObjectURL(url);
+}
+
 async function speakText(text, pKey) {
     const p = PERSONALITIES[pKey];
-    const voiceId = voiceOverrides[pKey]?.eleven || p.elevenVoices?.[0];
-    if (settings.elevenlabsKey && voiceId) {
-        try {
-            const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-                method: 'POST',
-                headers: { 'xi-api-key': settings.elevenlabsKey, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, model_id: 'eleven_monolingual_v1', voice_settings: { stability: 0.5, similarity_boost: 0.75 } })
-            });
-            if (resp.ok) {
-                const url = URL.createObjectURL(await resp.blob());
-                await new Promise((res, rej) => { const a = new Audio(url); a.onended = res; a.onerror = rej; a.play().catch(rej); });
-                URL.revokeObjectURL(url);
+    const hasUserOverride = !!voiceOverrides[pKey]?.eleven;
+    const voiceIds = hasUserOverride ? [voiceOverrides[pKey].eleven] : (p.elevenVoices || []);
+
+    if (settings.elevenlabsKey && voiceIds.length > 0) {
+        // Try cached voice first (Python's working_voice_cache behaviour)
+        if (!hasUserOverride && workingVoiceCache[pKey]) {
+            try {
+                await _playElevenAudio(text, workingVoiceCache[pKey]);
                 return;
+            } catch {
+                delete workingVoiceCache[pKey];
             }
-        } catch { /* fall through to Web Speech */ }
+        }
+        // Try each voice in order until one works, then cache it
+        for (const voiceId of voiceIds) {
+            try {
+                await _playElevenAudio(text, voiceId);
+                if (!hasUserOverride) workingVoiceCache[pKey] = voiceId;
+                return;
+            } catch { /* try next voice */ }
+        }
     }
+    // Web Speech API fallback (replaces Edge TTS)
     const utt = new SpeechSynthesisUtterance(text);
     utt.lang = p.lang || 'en-US';
-    const edgeName = voiceOverrides[pKey]?.edge;
-    if (edgeName) { const v = speechSynthesis.getVoices().find(v => v.name === edgeName); if (v) utt.voice = v; }
+    const voiceName = voiceOverrides[pKey]?.edge || p.webVoice;
+    if (voiceName) {
+        const voices = speechSynthesis.getVoices();
+        const v = voices.find(v => v.name.includes(voiceName));
+        if (v) utt.voice = v;
+    }
     speechSynthesis.speak(utt);
 }
 
@@ -234,6 +324,11 @@ async function handlePhonePickup() {
     isAnimating = true;
     offenseCount++;
     totalBusts++;
+    // Capture streak duration before breaking it (matches Python's exact-moment capture)
+    if (streakStart) {
+        const streakSecs = Math.floor((Date.now() - streakStart) / 1000);
+        if (streakSecs > longestStreak) longestStreak = streakSecs;
+    }
     streakStart = null;
     updateStats();
 
@@ -245,15 +340,20 @@ async function handlePhonePickup() {
         await Promise.all([anim(), playEmotion(emotion)]);
         setResponseText(`😡 *${emotion}*`);
     } else {
-        const [text] = await Promise.all([getLLMResponse(pKey, true, offenseCount), anim()]);
+        // Fetch LLM text, start speech (fire-and-forget like Python's non-blocking play_sound),
+        // then await only the animation — isAnimating clears after animation, not after audio
+        const text = await getLLMResponse(pKey, true, offenseCount);
         setResponseText(`😤 "${text}"`);
         speakText(text, pKey);
+        await anim();
     }
     isAnimating = false;
+    startIdleIfNeeded();
 }
 
 async function handlePhonePutdown() {
     if (!settings.praiseEnabled) return;
+    if (isAnimating) return;  // Python processes events sequentially; skip if already animating
     isAnimating = true;
     streakStart = Date.now();
     updateStats();
@@ -265,20 +365,23 @@ async function handlePhonePutdown() {
         await Promise.all([approvingNod(), playEmotion(emotion)]);
         setResponseText(`✨ *${emotion}*`);
     } else {
-        const [text] = await Promise.all([getLLMResponse(pKey, false, offenseCount), approvingNod()]);
+        const text = await getLLMResponse(pKey, false, offenseCount);
         setResponseText(`✅ "${text}"`);
         speakText(text, pKey);
+        await approvingNod();
     }
     isAnimating = false;
+    startIdleIfNeeded();
 }
 
 // ─── Detection loop (on WebRTC video) ────────────────────────────────────────
 async function initModel() {
-    setLoaderText('Loading AI model...');
+    const label = isMobile ? 'YOLO26n (mobile)' : 'YOLO26m';
+    setLoaderText(`Loading ${label} model...`);
     showLoader(true);
-    rvModel = await AutoModel.from_pretrained('onnx-community/yolo26m-ONNX', { device: 'webgpu', dtype: 'fp16' });
+    rvModel = await AutoModel.from_pretrained(`onnx-community/${RV_MODEL_NAME}`, { device: 'webgpu', dtype: 'fp16' });
     setLoaderText('Loading processor...');
-    rvProcessor = await AutoProcessor.from_pretrained('onnx-community/yolo26m-ONNX');
+    rvProcessor = await AutoProcessor.from_pretrained(`onnx-community/${RV_MODEL_NAME}`);
     showLoader(false);
 }
 
@@ -287,21 +390,29 @@ async function detectOnFrame() {
     const canvas = document.getElementById('rv-canvas');
     if (!video.videoWidth) return;
 
+    // Sync display canvas to video size
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
+    // Sync offscreen canvas, then scale down to smallCanvas — reused each frame like demo.js
+    rvOffscreen.width = video.videoWidth;
+    rvOffscreen.height = video.videoHeight;
+    rvOffscreenCtx.drawImage(video, 0, 0);
+
     const targetW = 256;
     const targetH = Math.round((targetW / video.videoWidth) * video.videoHeight);
-    const small = document.createElement('canvas');
-    small.width = targetW; small.height = targetH;
-    small.getContext('2d').drawImage(video, 0, 0, targetW, targetH);
+    if (rvSmallCanvas.width !== targetW || rvSmallCanvas.height !== targetH) {
+        rvSmallCanvas.width = targetW;
+        rvSmallCanvas.height = targetH;
+    }
+    rvSmallCtx.drawImage(rvOffscreen, 0, 0, targetW, targetH);
 
-    const inputs = await rvProcessor(RawImage.fromCanvas(small));
+    const inputs = await rvProcessor(RawImage.fromCanvas(rvSmallCanvas));
     const output = await rvModel(inputs);
     const scores = output.logits.sigmoid().data;
     const boxes = output.pred_boxes.data;
-    const confThreshold = lastPhoneBox ? 0.2 : 0.3;
+    const confThreshold = lastPhoneBox ? 0.2 : 0.5;
 
     let best = null, bestScore = 0;
     for (let i = 0; i < 300; i++) {
@@ -491,6 +602,8 @@ function openVoiceModal(pKey) {
     document.getElementById('rv-voice-edge').value = override.edge || '';
     document.getElementById('rv-voice-eleven-hint').textContent =
         p.elevenVoices?.[0] ? `Default: ${p.elevenVoices[0]}` : '';
+    document.getElementById('rv-voice-edge-hint').textContent =
+        p.defaultEdgeVoice ? `Default: ${p.defaultEdgeVoice} (partial name also works, e.g. "${p.webVoice}")` : 'Leave empty for browser default';
     document.getElementById('rv-voices-modal').style.display = '';
 }
 
@@ -517,6 +630,7 @@ async function setupRobot() {
             const mode = n.includes('sim') || n.includes('mockup') ? '🖥 Simulation'
                        : n.includes('wireless') || n.includes('wifi') ? '📡 Wireless'
                        : '🔌 Lite';
+            const sim = n.includes('sim') || n.includes('mockup');
             const btn = document.createElement('button');
             btn.className = 'rv-robot-btn';
             btn.innerHTML = `🤖 <strong>${name}</strong><span class="rv-robot-mode">${mode}</span>`;
@@ -524,6 +638,7 @@ async function setupRobot() {
                 list.querySelectorAll('.rv-robot-btn').forEach(b => b.classList.remove('selected'));
                 btn.classList.add('selected');
                 selectedRobotId = r.id;
+                isSimulation = sim;
                 connectBtn.style.display = '';
                 connectBtn.onclick = () => startSession(selectedRobotId);
             });
@@ -538,6 +653,7 @@ async function setupRobot() {
         if (placeholder) placeholder.style.display = 'none';
         populatePersonalities();
         startStreakTimer();
+        startIdleIfNeeded();
         if (!rvModel) await initModel();
     });
 
@@ -545,6 +661,9 @@ async function setupRobot() {
         isStreaming = false;
         stopMonitoring();
         if (detachVideo) { detachVideo(); detachVideo = null; }
+        if (webcamStream) { webcamStream.getTracks().forEach(t => t.stop()); webcamStream = null; }
+        const videoEl = document.getElementById('rv-video');
+        if (videoEl) videoEl.srcObject = null;
         const placeholder = document.getElementById('rv-video-placeholder');
         if (placeholder) placeholder.style.display = '';
         showRVState('rv-picker');
@@ -561,11 +680,17 @@ async function startSession(robotId) {
     if (!robot || robot.state !== 'connected') return;
     try {
         const videoEl = document.getElementById('rv-video');
-        detachVideo = robot.attachVideo(videoEl);
+        if (isSimulation) {
+            webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+            videoEl.srcObject = webcamStream;
+        } else {
+            detachVideo = robot.attachVideo(videoEl);
+        }
         await robot.startSession(robotId);
     } catch (e) {
         console.error('startSession failed:', e);
         if (detachVideo) { detachVideo(); detachVideo = null; }
+        if (webcamStream) { webcamStream.getTracks().forEach(t => t.stop()); webcamStream = null; }
     }
 }
 
@@ -573,12 +698,24 @@ function stopMonitoring() {
     isMonitoring = false;
     if (rvAnimId) { cancelAnimationFrame(rvAnimId); rvAnimId = null; }
     clearInterval(streakInterval);
+
+    // Freeze current streak so Continue Monitoring can restore it
+    frozenStreak = streakStart ? Math.floor((Date.now() - streakStart) / 1000) : 0;
+    hasPreviousSession = (totalBusts > 0 || offenseCount > 0 || frozenStreak > 0);
+
     const btn = document.getElementById('rv-toggle-btn');
-    if (btn) { btn.innerHTML = '▶️ Start Monitoring'; btn.classList.replace('btn-danger','btn-primary'); }
+    if (btn) {
+        const label = hasPreviousSession ? '▶️ Continue Monitoring' : '▶️ Start Monitoring';
+        btn.innerHTML = label;
+        btn.classList.replace('btn-danger', 'btn-primary');
+    }
     const dot = document.getElementById('rv-detect-dot');
     const txt = document.getElementById('rv-detect-text');
     if (dot) dot.className = 'status-dot';
     if (txt) txt.textContent = 'Monitoring off';
+
+    const resetSection = document.getElementById('rv-reset-section');
+    if (resetSection) resetSection.style.display = hasPreviousSession ? '' : 'none';
 }
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
@@ -605,12 +742,24 @@ function setupEventListeners() {
         if (isMonitoring) {
             btn.innerHTML = '🛑 Stop Monitoring';
             btn.classList.replace('btn-primary','btn-danger');
-            offenseCount = 0; phoneVisible = false; consecutivePhone = 0; consecutiveNoPhone = 0;
+            phoneVisible = false; consecutivePhone = 0; consecutiveNoPhone = 0;
             lastPhoneBox = null; framesWithoutDetection = 0; lastReactionTime = 0;
-            streakStart = Date.now(); updateStats();
+
+            if (hasPreviousSession) {
+                // Restore frozen state
+                streakStart = Date.now() - frozenStreak * 1000;
+            } else {
+                // Fresh start — reset everything
+                offenseCount = 0; totalBusts = 0; longestStreak = 0;
+                streakStart = Date.now();
+            }
+            hasPreviousSession = false; frozenStreak = 0;
+            updateStats();
             document.getElementById('rv-detect-dot').className = 'status-dot monitoring';
             document.getElementById('rv-detect-text').textContent = '✅ Phone-free';
+            document.getElementById('rv-reset-section').style.display = 'none';
             detectionLoop();
+            startIdleIfNeeded();
         } else {
             stopMonitoring();
         }
@@ -624,16 +773,23 @@ function setupEventListeners() {
     // Reset button
     document.getElementById('rv-reset-btn').addEventListener('click', () => {
         totalBusts = 0; offenseCount = 0; longestStreak = 0; streakStart = Date.now();
+        hasPreviousSession = false; frozenStreak = 0;
         updateStats();
         document.getElementById('rv-stat-streak').textContent = '0s';
         document.getElementById('rv-stat-longest').textContent = '0s';
         document.getElementById('rv-reset-section').style.display = 'none';
+        const btn = document.getElementById('rv-toggle-btn');
+        if (btn && !isMonitoring) btn.innerHTML = '▶️ Start Monitoring';
         setResponseText('Stats reset. Start monitoring to begin.');
     });
 
     // Disconnect
     document.getElementById('rv-disconnect-btn').addEventListener('click', async () => {
         stopMonitoring();
+        if (detachVideo) { detachVideo(); detachVideo = null; }
+        if (webcamStream) { webcamStream.getTracks().forEach(t => t.stop()); webcamStream = null; }
+        const videoEl = document.getElementById('rv-video');
+        if (videoEl) videoEl.srcObject = null;
         if (robot) { await robot.stopSession?.(); await robot.disconnect(); robot = null; }
         isStreaming = false;
         showRVState('rv-signin');
