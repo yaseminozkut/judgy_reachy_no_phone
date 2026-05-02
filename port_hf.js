@@ -648,10 +648,6 @@ async function setupRobot() {
 
     robot.addEventListener('streaming', async () => {
         isStreaming = true;
-        // In simulation the robot's WebRTC track may auto-attach; restore webcam
-        if (isSimulation && webcamStream) {
-            document.getElementById('rv-video').srcObject = webcamStream;
-        }
         showRVState('rv-monitoring');
         const placeholder = document.getElementById('rv-video-placeholder');
         if (placeholder) placeholder.style.display = 'none';
@@ -680,9 +676,24 @@ async function setupRobot() {
     robot.addEventListener('error', e => console.error('Robot error:', e));
 }
 
+async function queryDaemonSimulation() {
+    try {
+        const resp = await fetch('http://localhost:8000/daemon/status',
+            { signal: AbortSignal.timeout(2000) });
+        if (resp.ok) {
+            const s = await resp.json();
+            return !!(s.simulation_enabled || s.mockup_sim_enabled);
+        }
+    } catch {}
+    return null; // daemon unreachable — fall back to name-based value
+}
+
 async function startSession(robotId) {
     if (!robot || robot.state !== 'connected') return;
     try {
+        const daemonSim = await queryDaemonSimulation();
+        if (daemonSim !== null) isSimulation = daemonSim;
+
         const videoEl = document.getElementById('rv-video');
         if (isSimulation) {
             webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
