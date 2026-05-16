@@ -242,7 +242,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.detector.initialize()
 
         # Auto-detect: Use laptop webcam in simulation, robot camera otherwise
-        is_simulation = reachy_mini.client.get_status()["simulation_enabled"]
+        is_simulation = reachy_mini.client.get_status().simulation_enabled
         webcam = None
 
         if is_simulation:
