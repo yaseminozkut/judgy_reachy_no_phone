@@ -11,6 +11,7 @@ short_description: Robot shames you for phone addiction with AI vision
 tags:
  - reachy_mini
  - reachy_mini_python_app
+ - reachy_mini_js_app
  - productivity
 models:
  - onnx-community/yolo26m-ONNX
