@@ -580,8 +580,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     test_client = Groq(api_key=req.groq_key)
                     # Quick test call
                     test_client.chat.completions.create(
-                        model="llama-3.1-8b-instant",
-                        max_tokens=5,
+                        model="qwen/qwen3.8-27b",
+                        max_tokens=10,
                         messages=[{"role": "user", "content": "test"}]
                     )
                     result["groq_valid"] = True
