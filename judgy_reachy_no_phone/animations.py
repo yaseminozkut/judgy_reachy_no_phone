@@ -2,12 +2,19 @@
 
 import time
 import logging
+import threading
 import numpy as np
 
 from reachy_mini import ReachyMini
 from reachy_mini.utils import create_head_pose
+from reachy_mini.reachy_mini import INIT_HEAD_POSE
 
 logger = logging.getLogger(__name__)
+
+IDLE_SWAY_LOOP_HZ = 50
+IDLE_ANTENNA_AMP_DEG = 15.0
+IDLE_ANTENNA_FREQ_HZ = 0.3
+IDLE_HEAD_SMOOTHING = 0.04
 
 
 def play_sound_safe(reachy: ReachyMini, sound_name: str):
@@ -76,27 +83,32 @@ def approving_nod(reachy: ReachyMini):
     reachy.goto_target(head=head, antennas=[0.1, 0.1], duration=0.3)
 
 
-def idle_breathing(reachy: ReachyMini, should_stop=None):
-    """Gentle idle animation - can be interrupted by should_stop callback.
-
-    Args:
-        should_stop: Optional callback that returns True to interrupt animation
+def antenna_sway_loop(
+    reachy: ReachyMini,
+    stop_event: threading.Event,
+    playing_move: threading.Event,
+):
+    """Continuous sinusoidal antenna sway. Pauses while `playing_move` is set
+    so shame/praise animations can take over without fighting for the antennas.
     """
-    reachy.goto_target(antennas=[0.15, 0.15], duration=0.8, method="minjerk")
+    t0 = time.time()
+    dt = 1.0 / IDLE_SWAY_LOOP_HZ
+    amp_rad = np.deg2rad(IDLE_ANTENNA_AMP_DEG)
+    pose = INIT_HEAD_POSE.copy()
 
-    # Sleep in small chunks to allow interruption
-    for _ in range(16):  # 16 x 0.05 = 0.8s
-        if should_stop and should_stop():
-            return  # Exit immediately
-        time.sleep(0.05)
-
-    reachy.goto_target(antennas=[0.05, 0.05], duration=0.8, method="minjerk")
-
-    # Sleep in small chunks to allow interruption
-    for _ in range(16):  # 16 x 0.05 = 0.8s
-        if should_stop and should_stop():
-            return  # Exit immediately
-        time.sleep(0.05)
+    while not stop_event.is_set():
+        if playing_move.is_set():
+            pose = INIT_HEAD_POSE.copy()
+            time.sleep(dt)
+            continue
+        t = time.time() - t0
+        a = amp_rad * np.sin(2.0 * np.pi * IDLE_ANTENNA_FREQ_HZ * t)
+        pose = (1.0 - IDLE_HEAD_SMOOTHING) * pose + IDLE_HEAD_SMOOTHING * INIT_HEAD_POSE
+        try:
+            reachy.set_target(head=pose, antennas=[a, -a])
+        except Exception as e:
+            logger.debug(f"Sway tick error: {e}")
+        time.sleep(dt)
 
 
 def get_animation_for_count(count: int):

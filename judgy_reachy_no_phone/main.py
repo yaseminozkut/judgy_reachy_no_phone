@@ -24,7 +24,7 @@ from .animations import (
     get_animation_for_count,
     disappointed_shake,
     approving_nod,
-    idle_breathing
+    antenna_sway_loop,
 )
 from reachy_mini.motion.recorded_move import RecordedMoves
 
@@ -73,6 +73,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.praise_enabled = True
         self.has_previous_session = False  # Track if there's data to continue from
         self._lock = threading.Lock()
+        self.playing_move = threading.Event()  # Pauses idle antenna sway during shame/praise
 
         # Stats
         self.session_start = None
@@ -286,17 +287,17 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             )
             camera_thread.start()
 
-        # Detection and robot control loop (separate from camera display)
-        breath_counter = 0
-        BREATH_INTERVAL = 8
-        last_tick = time.time()
+        # Continuous antenna sway so the robot looks alive while idle.
+        # Pauses automatically whenever self.playing_move is set (shame/praise).
+        sway_thread = threading.Thread(
+            target=antenna_sway_loop,
+            args=(reachy_mini, stop_event, self.playing_move),
+            daemon=True,
+        )
+        sway_thread.start()
 
         try:
             while not stop_event.is_set():
-                current_time = time.time()
-                delta = current_time - last_tick
-                last_tick = current_time
-
                 # Process detection events from camera thread
                 while self.detection_event_queue:
                     event = self.detection_event_queue.pop(0)
@@ -307,18 +308,6 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                             self._handle_phone_putdown(reachy_mini)
                     except Exception as e:
                         logger.error(f"Event handling error: {e}")
-
-                # Idle breathing when not reacting - only if no pending events
-                breath_counter += delta
-                if breath_counter >= BREATH_INTERVAL:
-                    breath_counter = 0
-                    # Only do idle breathing if no events pending (to avoid blocking)
-                    if self.is_monitoring and not self.detector.phone_visible and len(self.detection_event_queue) == 0:
-                        try:
-                            # Pass callback to check for events during breathing
-                            idle_breathing(reachy_mini, should_stop=lambda: len(self.detection_event_queue) > 0)
-                        except:
-                            pass
 
                 # Faster loop for responsive event processing
                 time.sleep(0.05)  # 20 FPS = 50ms max delay
@@ -347,42 +336,46 @@ class JudgyReachyNoPhone(ReachyMiniApp):
 
         logger.info(f"Phone pickup #{count}!")
 
-        # Check if using Pure Reachy mode (no TTS, just emotions)
-        if self.llm.personality == "pure_reachy" and self.emotions:
-            # Randomly pick a shame emotion from the config list
-            import random
-            personality_data = PERSONALITIES["pure_reachy"]
-            shame_emotions = personality_data.get("shame_emotions", ["reprimand1"])
-            emotion_name = random.choice(shame_emotions)
-            emotion = self.emotions.get(emotion_name)
-            logger.info(f"Pure Reachy shame: {emotion_name}")
+        self.playing_move.set()
+        try:
+            # Check if using Pure Reachy mode (no TTS, just emotions)
+            if self.llm.personality == "pure_reachy" and self.emotions:
+                # Randomly pick a shame emotion from the config list
+                import random
+                personality_data = PERSONALITIES["pure_reachy"]
+                shame_emotions = personality_data.get("shame_emotions", ["reprimand1"])
+                emotion_name = random.choice(shame_emotions)
+                emotion = self.emotions.get(emotion_name)
+                logger.info(f"Pure Reachy shame: {emotion_name}")
 
-            # Play emotion (includes sound + animation automatically)
-            reachy.play_move(emotion)
-        else:
-            # Normal mode: Get snarky response via TTS
-            text = self.llm.get_response(count)
-            logger.info(f"Response: {text}")
+                # Play emotion (includes sound + animation automatically)
+                reachy.play_move(emotion)
+            else:
+                # Normal mode: Get snarky response via TTS
+                text = self.llm.get_response(count)
+                logger.info(f"Response: {text}")
 
-            # Generate and play audio
-            try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                audio_path = loop.run_until_complete(self.tts.synthesize(text))
-                loop.close()
+                # Generate and play audio
+                try:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    audio_path = loop.run_until_complete(self.tts.synthesize(text))
+                    loop.close()
 
-                # Play audio
-                reachy.media.play_sound(audio_path)
+                    # Play audio
+                    reachy.media.play_sound(audio_path)
 
-                # Animate based on offense count
-                animation = get_animation_for_count(count)
-                animation(reachy)
+                    # Animate based on offense count
+                    animation = get_animation_for_count(count)
+                    animation(reachy)
 
-            except Exception as e:
-                logger.error(f"Shame response error: {e}")
-                # Fallback: just animate
-                play_sound_safe(reachy, "confused1.wav")
-                disappointed_shake(reachy)
+                except Exception as e:
+                    logger.error(f"Shame response error: {e}")
+                    # Fallback: just animate
+                    play_sound_safe(reachy, "confused1.wav")
+                    disappointed_shake(reachy)
+        finally:
+            self.playing_move.clear()
 
     def _handle_phone_putdown(self, reachy: ReachyMini):
         """Handle phone put down event."""
@@ -391,36 +384,40 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         # Start new streak
         self.current_streak_start = time.time()
 
-        # Check if using Pure Reachy mode (no TTS, just emotions)
-        if self.llm.personality == "pure_reachy" and self.emotions:
-            # Randomly pick a praise emotion from the config list
-            import random
-            personality_data = PERSONALITIES["pure_reachy"]
-            praise_emotions = personality_data.get("praise_emotions", ["yes1"])
-            emotion_name = random.choice(praise_emotions)
-            emotion = self.emotions.get(emotion_name)
-            logger.info(f"Pure Reachy praise: {emotion_name}")
+        self.playing_move.set()
+        try:
+            # Check if using Pure Reachy mode (no TTS, just emotions)
+            if self.llm.personality == "pure_reachy" and self.emotions:
+                # Randomly pick a praise emotion from the config list
+                import random
+                personality_data = PERSONALITIES["pure_reachy"]
+                praise_emotions = personality_data.get("praise_emotions", ["yes1"])
+                emotion_name = random.choice(praise_emotions)
+                emotion = self.emotions.get(emotion_name)
+                logger.info(f"Pure Reachy praise: {emotion_name}")
 
-            # Play emotion (includes sound + animation automatically)
-            reachy.play_move(emotion)
-        else:
-            # Normal mode: Get praise via TTS
-            text = self.llm.get_praise()
-            logger.info(f"Praise: {text}")
+                # Play emotion (includes sound + animation automatically)
+                reachy.play_move(emotion)
+            else:
+                # Normal mode: Get praise via TTS
+                text = self.llm.get_praise()
+                logger.info(f"Praise: {text}")
 
-            try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                audio_path = loop.run_until_complete(self.tts.synthesize(text))
-                loop.close()
+                try:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    audio_path = loop.run_until_complete(self.tts.synthesize(text))
+                    loop.close()
 
-                reachy.media.play_sound(audio_path)
+                    reachy.media.play_sound(audio_path)
 
-                approving_nod(reachy)
+                    approving_nod(reachy)
 
-            except Exception as e:
-                logger.debug(f"Praise error: {e}")
-                approving_nod(reachy)
+                except Exception as e:
+                    logger.debug(f"Praise error: {e}")
+                    approving_nod(reachy)
+        finally:
+            self.playing_move.clear()
 
     def _run_ui(self, reachy_mini: ReachyMini, stop_event: threading.Event):
         """Setup FastAPI routes for the UI."""
@@ -712,36 +709,40 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             self.detector.phone_count += 1
             self.total_shames += 1
 
-            # Check if using Pure Reachy mode (no TTS, just emotions)
-            if req.personality == "pure_reachy" and self.emotions:
-                # Randomly pick a shame emotion from the config list
-                import random
-                personality_data = PERSONALITIES["pure_reachy"]
-                shame_emotions = personality_data.get("shame_emotions", ["curious1"])
-                emotion_name = random.choice(shame_emotions)
-                emotion = self.emotions.get(emotion_name)
-                logger.info(f"Pure Reachy test: {emotion_name}")
+            self.playing_move.set()
+            try:
+                # Check if using Pure Reachy mode (no TTS, just emotions)
+                if req.personality == "pure_reachy" and self.emotions:
+                    # Randomly pick a shame emotion from the config list
+                    import random
+                    personality_data = PERSONALITIES["pure_reachy"]
+                    shame_emotions = personality_data.get("shame_emotions", ["curious1"])
+                    emotion_name = random.choice(shame_emotions)
+                    emotion = self.emotions.get(emotion_name)
+                    logger.info(f"Pure Reachy test: {emotion_name}")
 
-                reachy_mini.play_move(emotion)
-            else:
-                # Normal mode: Get response via TTS
-                text = self.llm.get_response(self.detector.phone_count)
-                logger.info(f"Test response: {text}")
+                    reachy_mini.play_move(emotion)
+                else:
+                    # Normal mode: Get response via TTS
+                    text = self.llm.get_response(self.detector.phone_count)
+                    logger.info(f"Test response: {text}")
 
-                # Play audio and animate
-                try:
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    audio_path = loop.run_until_complete(self.tts.synthesize(text))
-                    loop.close()
+                    # Play audio and animate
+                    try:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        audio_path = loop.run_until_complete(self.tts.synthesize(text))
+                        loop.close()
 
-                    reachy_mini.media.play_sound(audio_path)
-                    animation = get_animation_for_count(self.detector.phone_count)
-                    animation(reachy_mini)
-                except Exception as e:
-                    logger.error(f"Test error: {e}")
-                    play_sound_safe(reachy_mini, "confused1.wav")
-                    disappointed_shake(reachy_mini)
+                        reachy_mini.media.play_sound(audio_path)
+                        animation = get_animation_for_count(self.detector.phone_count)
+                        animation(reachy_mini)
+                    except Exception as e:
+                        logger.error(f"Test error: {e}")
+                        play_sound_safe(reachy_mini, "confused1.wav")
+                        disappointed_shake(reachy_mini)
+            finally:
+                self.playing_move.clear()
 
             return {"success": True}
 
