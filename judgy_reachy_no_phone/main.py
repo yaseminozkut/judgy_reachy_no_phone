@@ -18,7 +18,26 @@ from pydantic import BaseModel
 
 from .config import Config, PERSONALITIES
 from .detection import PhoneDetector
-from .audio import LLMResponder, TextToSpeech
+import os
+from dotenv import load_dotenv
+# Load .env from the project root so USE_LOCAL_LLM / GROQ_API_KEY / etc. are available.
+load_dotenv()
+
+from .audio import LLMResponder, LocalLLMResponder, TextToSpeech
+
+# Toggle via env: `USE_LOCAL_LLM=1` in .env (or exported) to use the on-device MLX model.
+# Falls back silently to Groq if local load fails.
+USE_LOCAL_LLM = os.environ.get("USE_LOCAL_LLM", "0") == "1"
+
+
+def make_llm(groq_key: str, personality: str):
+    """Instantiate the LLM backend. Honors USE_LOCAL_LLM env var; falls back to Groq on error."""
+    if USE_LOCAL_LLM:
+        try:
+            return LocalLLMResponder(personality=personality)
+        except Exception as e:
+            logger.warning(f"Local LLM unavailable ({e}); falling back to Groq")
+    return LLMResponder(api_key=groq_key, personality=personality)
 from .animations import (
     play_sound_safe,
     get_animation_for_count,
@@ -53,7 +72,22 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             confidence=self.config.DETECTION_CONFIDENCE,
             loading_callback=self._on_model_loading
         )
-        self.llm = LLMResponder(api_key=self.config.GROQ_API_KEY, personality="pure_reachy")
+        # Instantiate all backends we can — keeping all three warm enables live UI switching.
+        self.groq_llm = LLMResponder(api_key=self.config.GROQ_API_KEY, personality="pure_reachy")
+        self.prewritten_llm = LLMResponder(api_key="", personality="pure_reachy")  # client=None → always falls back
+        try:
+            self.local_llm = LocalLLMResponder(personality="pure_reachy")
+        except Exception as e:
+            logger.warning(f"Local LLM unavailable at startup (switch disabled): {e}")
+            self.local_llm = None
+        # Pick initial active backend based on env preference
+        if USE_LOCAL_LLM and self.local_llm is not None:
+            self.llm = self.local_llm
+        elif self.groq_llm.client is not None:
+            self.llm = self.groq_llm
+        else:
+            self.llm = self.prewritten_llm
+        logger.info(f"Initial LLM backend: {type(self.llm).__name__}")
         # Don't pass config voice defaults - let personalities use their own defaults
         self.tts = TextToSpeech(
             elevenlabs_key=self.config.ELEVENLABS_API_KEY,
@@ -89,6 +123,36 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self.camera_running = False
         self.camera_fps = 0
         self.detection_event_queue = []
+
+    def _set_llm_personality(self, backend: str, groq_key: str, personality: str):
+        """Swap active LLM backend and sync personality across all backends.
+        No model reloading — all three stay warm in memory for instant switching."""
+        # Switch active backend if the UI requested one
+        if backend == "local":
+            if self.local_llm is not None:
+                self.llm = self.local_llm
+            else:
+                logger.warning("Local backend requested but not loaded; using Groq")
+                self.llm = self.groq_llm
+        elif backend == "groq":
+            self.llm = self.groq_llm
+        elif backend == "prewritten":
+            self.llm = self.prewritten_llm
+        # (empty backend = keep current)
+
+        # If Groq key changed, swap in a new Groq client
+        new_key = groq_key or self.config.GROQ_API_KEY
+        if new_key and self.groq_llm.api_key != new_key:
+            self.groq_llm = LLMResponder(api_key=new_key, personality=personality)
+            if self.llm is not self.local_llm and self.llm is not self.prewritten_llm:
+                self.llm = self.groq_llm
+
+        # Keep personality in sync across all backends so switching is seamless
+        if self.local_llm is not None:
+            self.local_llm.personality = personality
+        self.groq_llm.personality = personality
+        self.prewritten_llm.personality = personality
+        logger.info(f"LLM backend now: {type(self.llm).__name__}, personality: {personality}")
 
     def _on_model_loading(self, status: str, message: str):
         """Callback for model loading progress (like demo.js)."""
@@ -426,6 +490,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             praise: bool = True
             reset: bool = False  # If True, reset all stats (Start Fresh)
             personality: str = "pure_reachy"  # Robot personality
+            backend: str = ""  # "local" | "groq" | "prewritten" (empty = keep current / use env default)
 
         # API endpoint: Get loading status (like demo.js)
         @self.settings_app.get("/api/loading-status")
@@ -515,12 +580,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
             else:
                 # Start or Continue monitoring
                 # Always update LLM responder with personality (for prewritten lines even without API key)
-                if req.groq_key:
-                    logger.info(f"Initializing LLM with Groq API key: {req.groq_key[:10]}... personality: {req.personality}")
-                    self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
-                else:
-                    logger.info(f"No Groq API key provided, using pre-written lines with personality: {req.personality}")
-                    self.llm = LLMResponder(api_key="", personality=req.personality)
+                logger.info(f"Initializing LLM (USE_LOCAL_LLM={USE_LOCAL_LLM}) personality: {req.personality}")
+                self._set_llm_personality(req.backend, req.groq_key, req.personality)
 
                 # Initialize TTS - pass custom voices only if explicitly set (empty string means use personality default)
                 if req.eleven_key:
@@ -680,10 +741,7 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         def test_shame(req: ToggleRequest):
             # Apply settings from UI before testing (but don't start monitoring)
             # Always update LLM responder with personality (for prewritten lines even without API key)
-            if req.groq_key:
-                self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
-            else:
-                self.llm = LLMResponder(api_key="", personality=req.personality)
+            self._set_llm_personality(req.backend, req.groq_key, req.personality)
 
             # Pass voice overrides only if explicitly set (empty string means use personality default)
             if req.eleven_key:
@@ -745,12 +803,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         def update_personality(req: ToggleRequest):
             """Update personality, voice, and API keys while monitoring is running."""
             # Update LLM with new personality
-            if req.groq_key:
-                self.llm = LLMResponder(api_key=req.groq_key, personality=req.personality)
-                logger.info(f"Updated LLM: personality={req.personality}, groq_key={'SET' if req.groq_key else 'NONE'}")
-            else:
-                self.llm = LLMResponder(api_key="", personality=req.personality)
-                logger.info(f"Updated LLM: personality={req.personality}, using prewritten lines")
+            self._set_llm_personality(req.backend, req.groq_key, req.personality)
+            logger.info(f"Updated LLM: personality={req.personality}, USE_LOCAL_LLM={USE_LOCAL_LLM}")
 
             # Update TTS with new personality and voices
             if req.eleven_key:

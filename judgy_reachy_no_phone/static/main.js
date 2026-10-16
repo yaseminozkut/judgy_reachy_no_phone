@@ -74,6 +74,7 @@ async function updateUIForAPIKeys() {
     const elevenKey = document.getElementById('eleven-key').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+    const backend = document.getElementById('llm-backend').value;
 
     // If no API keys at all, show default message
     if (!groqKey && !elevenKey) {
@@ -99,7 +100,8 @@ async function updateUIForAPIKeys() {
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
-                personality: selectedPersonality
+                personality: selectedPersonality,
+                backend: backend
             })
         });
 
@@ -322,6 +324,7 @@ async function toggleMonitoring() {
     const elevenKey = document.getElementById('eleven-key').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+    const backend = document.getElementById('llm-backend').value;
 
     // Get voice override for selected personality
     const voiceOverride = voiceOverrides[selectedPersonality] || {};
@@ -338,7 +341,8 @@ async function toggleMonitoring() {
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
-                personality: selectedPersonality
+                personality: selectedPersonality,
+                backend: backend
             })
         });
 
@@ -370,6 +374,7 @@ async function testShame() {
     const elevenKey = document.getElementById('eleven-key').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+    const backend = document.getElementById('llm-backend').value;
 
     // Get voice override for selected personality
     const voiceOverride = voiceOverrides[selectedPersonality] || {};
@@ -386,7 +391,8 @@ async function testShame() {
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
-                personality: selectedPersonality
+                personality: selectedPersonality,
+                backend: backend
             })
         });
         await updateDisplay();
@@ -401,6 +407,7 @@ async function updatePersonalityWhileRunning() {
     const elevenKey = document.getElementById('eleven-key').value;
     const cooldown = document.getElementById('cooldown').value;
     const praise = document.getElementById('praise-toggle').checked;
+    const backend = document.getElementById('llm-backend').value;
     const voiceOverride = voiceOverrides[selectedPersonality] || {};
 
     try {
@@ -415,7 +422,8 @@ async function updatePersonalityWhileRunning() {
                 cooldown: parseInt(cooldown),
                 praise: praise,
                 reset: false,
-                personality: selectedPersonality
+                personality: selectedPersonality,
+                backend: backend
             })
         });
         console.log('Personality updated to:', selectedPersonality);
@@ -496,6 +504,9 @@ async function initialize() {
     document.getElementById('toggle-btn').addEventListener('click', toggleMonitoring);
     document.getElementById('test-btn').addEventListener('click', testShame);
     document.getElementById('reset-btn').addEventListener('click', resetStats);
+
+    // Live-switch LLM backend when dropdown changes (works while monitoring too)
+    document.getElementById('llm-backend').addEventListener('change', updatePersonalityWhileRunning);
 
     // Voice settings modal
     document.getElementById('close-voice-settings').addEventListener('click', () => {

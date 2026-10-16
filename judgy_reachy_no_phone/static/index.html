@@ -125,6 +125,15 @@
             </div>
             <div class="settings-body">
                 <div class="form-group">
+                    <label for="llm-backend">LLM Backend</label>
+                    <select id="llm-backend">
+                        <option value="local">🖥️ Local MLX (on-device, Qwen2.5-3B)</option>
+                        <option value="groq">☁️ Groq Cloud (Qwen3-27B)</option>
+                        <option value="prewritten">📝 Prewritten lines (no LLM)</option>
+                    </select>
+                    <small class="input-hint">Switch between on-device, cloud, and no-LLM instantly</small>
+                </div>
+                <div class="form-group">
                     <label for="groq-key">Groq API Key (optional)</label>
                     <input type="password" id="groq-key" placeholder="Get free at console.groq.com">
                 </div>
