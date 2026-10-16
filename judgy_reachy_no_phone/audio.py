@@ -28,8 +28,11 @@ class LLMResponder:
     def get_response(self, phone_count: int, context: str = "") -> str:
         """Get a snarky response about phone usage."""
 
+        print(f"\n=== LLM get_response called: personality={self.personality}, client={'YES' if self.client else 'NONE'} ===")
+
         # Fallback to personality-specific pre-written if no API
         if not self.client:
+            print("  → No client, using prewritten shame")
             return self._get_prewritten_shame()
 
         try:
@@ -45,17 +48,20 @@ class LLMResponder:
             shame_data = personality_data["shame"]
             voice_desc = personality_data["voice"]
             avoid = personality_data.get("avoid", "")
+            # Strip leading emoji from name (e.g. "😠 Angry Boss" → "Angry Boss")
+            clean_name = personality_data["name"].split(maxsplit=1)[-1]
 
             # Construct prompt from structured data
-            personality_prompt = f"""{voice_desc}
+            personality_prompt = f"""You ARE "{clean_name}". {voice_desc}
+
+SCENE: You caught someone picking up their phone when they should be focusing on work. Call them out in your character's voice.
 
 TONE: {shame_data['tone']}
 STRUCTURE: {shame_data['structure']}
+AVOID: {avoid}
 
-EXAMPLES:
-{chr(10).join('- ' + ex for ex in shame_data['examples'])}
-
-AVOID: {avoid}"""
+EXAMPLES (you may use any of these or invent your own in the same voice):
+{chr(10).join('- ' + ex for ex in shame_data['examples'])}"""
 
             # Build context based on count
             if phone_count == 1:
@@ -69,38 +75,60 @@ AVOID: {avoid}"""
             else:
                 context_hint = f"{phone_count} times today!"
 
-            response = self.client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                max_tokens=20,
-                temperature=1.1,  # High creativity for varied, entertaining responses
-                messages=[
-                    {
-                        "role": "system",
-                        "content": f"""TASK: Generate a NEGATIVE/SCOLDING response because someone just picked up their phone (BAD behavior).
+            system_msg = f"""TASK: Generate a NEGATIVE/SCOLDING response because someone just picked up their phone (BAD behavior).
 
 {personality_prompt}
 
 RULES:
-- Maximum 8 words. Prefer 3-5 words.
-- Be CRITICAL/NEGATIVE about picking up the phone.
-- Match the personality's voice exactly.
+- Vary your responses across calls — mix in the examples, your own fresh lines, or short combinations.
+- 3-10 words. Must make sense and stay in character.
+- Match the personality's voice. Invent specific content.
 - No emoji. No hashtags."""
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Phone pickup #{phone_count} today. {context_hint}"
-                    }
-                ]
+            user_msg = f"Phone pickup #{phone_count} today. {context_hint}"
+
+            print(f"  → actual_personality: {actual_personality}")
+            print(f"  → model: qwen/qwen3.8-27b, max_tokens=40, temperature=1.2")
+            print(f"  → user: {user_msg}")
+            print(f"  → system (first 200 chars): {system_msg[:200]}...")
+
+            response = self.client.chat.completions.create(
+                model="qwen/qwen3.8-27b",
+                max_tokens=40,
+                temperature=1.2,
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_msg},
+                ],
             )
-            return response.choices[0].message.content.strip()
+
+            print(f"  ← FULL response: {response}")
+            print(f"  ← response.model_dump(): {response.model_dump() if hasattr(response, 'model_dump') else 'no model_dump'}")
+            print(f"  ← choices[0].message: {response.choices[0].message}")
+            print(f"  ← content: {response.choices[0].message.content!r}")
+            if hasattr(response.choices[0].message, 'reasoning'):
+                print(f"  ← reasoning field: {response.choices[0].message.reasoning!r}")
+            if hasattr(response, "usage") and response.usage:
+                print(f"  ← usage: prompt={response.usage.prompt_tokens} completion={response.usage.completion_tokens} total={response.usage.total_tokens}")
+
+            text = (response.choices[0].message.content or "").strip()
+            if not text:
+                print("  ⚠️ empty content from LLM — falling back to prewritten")
+                return self._get_prewritten_shame()
+            return text
         except Exception as e:
+            print(f"  ❌ Groq API error: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             logger.warning(f"Groq API error: {e}, using fallback")
             return self._get_prewritten_shame()
 
     def get_praise(self) -> str:
         """Get praise for putting phone down."""
 
+        print(f"\n=== LLM get_praise called: personality={self.personality}, client={'YES' if self.client else 'NONE'} ===")
+
         if not self.client:
+            print("  → No client, using prewritten praise")
             return self._get_prewritten_praise()
 
         try:
@@ -114,38 +142,64 @@ RULES:
 
             # Build praise prompt from structured data
             praise_data = personality_data["praise"]
+            voice_desc = personality_data["voice"]
+            # Strip leading emoji from name (e.g. "😠 Angry Boss" → "Angry Boss")
+            clean_name = personality_data["name"].split(maxsplit=1)[-1]
 
             # Construct prompt
-            personality_prompt = f"""TONE: {praise_data['tone']}
+            personality_prompt = f"""You ARE "{clean_name}". {voice_desc}
 
-EXAMPLES:
+SCENE: They finally put their phone down after you called them out. React in character — acknowledge the win in your personality's style.
+
+TONE: {praise_data['tone']}
+
+EXAMPLES (you may use any of these or invent your own in the same voice):
 {chr(10).join('- ' + ex for ex in praise_data['examples'])}"""
 
-            response = self.client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                max_tokens=15,
-                temperature=0.8,  # Faster, still varied
-                messages=[
-                    {
-                        "role": "system",
-                        "content": f"""TASK: Generate a POSITIVE/APPROVING response because someone just put their phone down (GOOD behavior).
+            system_msg = f"""TASK: Generate a POSITIVE/APPROVING response because someone just put their phone down (GOOD behavior).
 
 {personality_prompt}
 
 RULES:
-- Maximum 5 words. Prefer 2-3 words.
-- Be POSITIVE/APPROVING about putting the phone down.
-- Match the personality's voice exactly.
+- Vary your responses across calls — mix in the examples or invent your own.
+- 2-6 words. Must make sense and stay in character.
+- Match the personality's voice.
 - No emoji."""
-                    },
-                    {
-                        "role": "user",
-                        "content": "Phone down."
-                    }
-                ]
+            user_msg = "Phone down."
+
+            print(f"  → actual_personality: {actual_personality}")
+            print(f"  → model: qwen/qwen3.8-27b, max_tokens=25, temperature=1.0")
+            print(f"  → user: {user_msg}")
+            print(f"  → system (first 200 chars): {system_msg[:200]}...")
+
+            response = self.client.chat.completions.create(
+                model="qwen/qwen3.8-27b",
+                max_tokens=25,
+                temperature=1.0,
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_msg},
+                ],
             )
-            return response.choices[0].message.content.strip()
-        except Exception:
+
+            print(f"  ← FULL response: {response}")
+            print(f"  ← response.model_dump(): {response.model_dump() if hasattr(response, 'model_dump') else 'no model_dump'}")
+            print(f"  ← choices[0].message: {response.choices[0].message}")
+            print(f"  ← content: {response.choices[0].message.content!r}")
+            if hasattr(response.choices[0].message, 'reasoning'):
+                print(f"  ← reasoning field: {response.choices[0].message.reasoning!r}")
+            if hasattr(response, "usage") and response.usage:
+                print(f"  ← usage: prompt={response.usage.prompt_tokens} completion={response.usage.completion_tokens} total={response.usage.total_tokens}")
+
+            text = (response.choices[0].message.content or "").strip()
+            if not text:
+                print("  ⚠️ empty content from LLM — falling back to prewritten")
+                return self._get_prewritten_praise()
+            return text
+        except Exception as e:
+            print(f"  ❌ Groq API error: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             return self._get_prewritten_praise()
 
     def _get_prewritten_shame(self) -> str:
