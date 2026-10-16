@@ -123,7 +123,6 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         """Fast camera capture and encoding thread (for laptop webcam in simulation)."""
         fps_counter = 0
         fps_start = time.time()
-        detection_skip = 0
 
         logger.info("Laptop camera thread started (simulation mode)")
 
@@ -144,8 +143,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     fps_counter = 0
                     fps_start = time.time()
 
-                # Run detection every 3rd frame
-                if self.is_monitoring and (detection_skip % 3 == 0):
+                # Run detection every frame (ByteTrack needs continuity)
+                if self.is_monitoring:
                     try:
                         event = self.detector.process_frame(
                             frame,
@@ -158,8 +157,6 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                             self.detection_event_queue.append(event)
                     except Exception as e:
                         logger.error(f"Detection error: {e}")
-
-                detection_skip += 1
 
                 # Draw detection boxes only (no text overlays)
                 frame_with_boxes = self.detector.draw_detections(frame)
@@ -177,7 +174,6 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         """Camera thread using robot's media system (for real robot)."""
         fps_counter = 0
         fps_start = time.time()
-        detection_skip = 0
 
         logger.info("Robot camera thread started")
 
@@ -198,8 +194,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     fps_counter = 0
                     fps_start = time.time()
 
-                # Run detection every 3rd frame
-                if self.is_monitoring and (detection_skip % 3 == 0):
+                # Run detection every frame (ByteTrack needs continuity)
+                if self.is_monitoring:
                     try:
                         event = self.detector.process_frame(
                             frame,
@@ -212,8 +208,6 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                             self.detection_event_queue.append(event)
                     except Exception as e:
                         logger.error(f"Detection error: {e}")
-
-                detection_skip += 1
 
                 # Draw detection boxes only (no text overlays)
                 frame_with_boxes = self.detector.draw_detections(frame)
