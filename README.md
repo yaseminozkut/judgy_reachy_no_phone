@@ -769,9 +769,9 @@ Partnership: **Pollen Robotics Reachy Mini x Hugging Face x NVIDIA**
 
 ## 🎥 Demo
 
-**[Watch Demo Video →](https://your-demo-link)**
+**[Watch Demo Video →](https://lnkd.in/p/gCsPE9VF)**
 
-**[Try Live Demo on Hugging Face →](https://huggingface.co/spaces/pollen-robotics/Reachy_Mini)**
+**[Try Live Demo on Hugging Face →](https://huggingface.co/spaces/yozkut/judgy_reachy_no_phone)**
 
 ---
 
