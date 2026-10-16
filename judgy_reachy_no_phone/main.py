@@ -109,6 +109,10 @@ class JudgyReachyNoPhone(ReachyMiniApp):
         self._lock = threading.Lock()
         self.playing_move = threading.Event()  # Pauses idle antenna sway during shame/praise
 
+        # Last LLM response — surfaced to UI as a caption overlay on the camera view
+        self.last_response_text = ""
+        self.last_response_time = 0.0
+
         # Stats
         self.session_start = None
         self.total_shames = 0
@@ -412,6 +416,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 # Normal mode: Get snarky response via TTS
                 text = self.llm.get_response(count)
                 logger.info(f"Response: {text}")
+                self.last_response_text = text
+                self.last_response_time = time.time()
 
                 # Generate and play audio
                 try:
@@ -460,6 +466,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 # Normal mode: Get praise via TTS
                 text = self.llm.get_praise()
                 logger.info(f"Praise: {text}")
+                self.last_response_text = text
+                self.last_response_time = time.time()
 
                 try:
                     loop = asyncio.new_event_loop()
@@ -557,7 +565,9 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                 "mode": mode_text,
                 "is_monitoring": self.is_monitoring,
                 "button_text": button_text,
-                "has_previous_session": self.has_previous_session
+                "has_previous_session": self.has_previous_session,
+                "last_response_text": self.last_response_text,
+                "last_response_time": self.last_response_time,
             }
 
         # API endpoint: Toggle monitoring
@@ -778,6 +788,8 @@ class JudgyReachyNoPhone(ReachyMiniApp):
                     # Normal mode: Get response via TTS
                     text = self.llm.get_response(self.detector.phone_count)
                     logger.info(f"Test response: {text}")
+                    self.last_response_text = text
+                    self.last_response_time = time.time()
 
                     # Play audio and animate
                     try:

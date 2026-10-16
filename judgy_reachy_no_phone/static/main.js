@@ -79,7 +79,6 @@ async function updateUIForAPIKeys() {
     // If no API keys at all, show default message
     if (!groqKey && !elevenKey) {
         document.getElementById('mode-text').textContent = 'YOLO26m | Pre-written personality lines → Edge TTS';
-        document.getElementById('api-notice').classList.remove('hidden');
         // Keep personalities enabled - they still have different voices and pre-written lines
         return;
     }
@@ -110,15 +109,7 @@ async function updateUIForAPIKeys() {
         // Update tech badge
         document.getElementById('mode-text').textContent = data.mode;
 
-        // Show/hide API notice (personalities stay enabled)
-        const apiNotice = document.getElementById('api-notice');
-        if (data.groq_valid) {
-            apiNotice.classList.add('hidden');
-        } else {
-            apiNotice.classList.remove('hidden');
-        }
-
-        // Show validation feedback with detailed errors
+// Show validation feedback with detailed errors
         if (data.errors && data.errors.length > 0) {
             alert('Validation errors:\n\n' + data.errors.join('\n'));
         }
@@ -239,6 +230,26 @@ async function updateVideo() {
     }
 }
 
+// Caption overlay — shows what the LLM just said, auto-hides after 5s.
+// Backend sends `last_response_time` (unix seconds); we only show when it changes.
+let _lastShownResponseTime = 0;
+let _captionHideTimer = null;
+function maybeShowCaption(text, responseTime) {
+    if (!text || !responseTime) return;
+    if (responseTime === _lastShownResponseTime) return;  // not new
+    _lastShownResponseTime = responseTime;
+
+    const el = document.getElementById('llm-caption');
+    if (!el) return;
+    el.textContent = text;
+    el.classList.add('visible');
+
+    if (_captionHideTimer) clearTimeout(_captionHideTimer);
+    _captionHideTimer = setTimeout(() => {
+        el.classList.remove('visible');
+    }, 8000);
+}
+
 // Update display from API data
 async function updateDisplay() {
     try {
@@ -266,6 +277,9 @@ async function updateDisplay() {
         document.getElementById('current-streak').textContent = data.current_streak;
         document.getElementById('longest-streak').textContent = data.longest_streak;
 
+        // Show caption overlay when a new LLM response just fired
+        maybeShowCaption(data.last_response_text, data.last_response_time);
+
         // Update mode name - get the display name from the active personality card
         const activeCard = document.querySelector('.personality-card.active');
         if (activeCard) {
@@ -277,13 +291,6 @@ async function updateDisplay() {
         if (data.is_monitoring) {
             document.getElementById('mode-text').textContent = data.mode;
 
-            // Show/hide API notice based on whether LLM is active
-            const apiNotice = document.getElementById('api-notice');
-            if (data.mode.includes('LLM + TTS')) {
-                apiNotice.classList.add('hidden');
-            } else {
-                apiNotice.classList.remove('hidden');
-            }
         }
 
         // Update button
