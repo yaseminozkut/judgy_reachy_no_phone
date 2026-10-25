@@ -60,6 +60,9 @@
                         <div class="spinner"></div>
                         <p id="loader-text" class="loader-text">Initializing...</p>
                     </div>
+
+                    <!-- Caption overlay: shows what Reachy just said -->
+                    <div id="llm-caption" class="llm-caption"></div>
                 </div>
             </div>
 
@@ -100,16 +103,7 @@
                 <h2 class="panel-title">🤖 Robot Personality</h2>
                 <p class="panel-subtitle">Choose how the robot judges you</p>
 
-                <!-- API Key Notice -->
-                <div class="api-notice" id="api-notice">
-                    <div class="notice-icon">💡</div>
-                    <div class="notice-text">
-                        <strong>Using Pre-written Lines</strong><br>
-                        <span class="notice-small">Add Groq API key in settings for AI-powered responses</span>
-                    </div>
-                </div>
-
-                <div class="personality-list" id="personality-list">
+<div class="personality-list" id="personality-list">
                     <!-- Personalities loaded dynamically from config -->
                 </div>
             </div>
@@ -124,6 +118,15 @@
                 <button class="close-btn" id="close-settings">✕</button>
             </div>
             <div class="settings-body">
+                <div class="form-group">
+                    <label for="llm-backend">LLM Backend</label>
+                    <select id="llm-backend">
+                        <option value="local">🖥️ Local MLX (on-device, Qwen2.5-3B)</option>
+                        <option value="groq">☁️ Groq Cloud (Qwen3-27B)</option>
+                        <option value="prewritten">📝 Prewritten lines (no LLM)</option>
+                    </select>
+                    <small class="input-hint">Switch between on-device, cloud, and no-LLM instantly</small>
+                </div>
                 <div class="form-group">
                     <label for="groq-key">Groq API Key (optional)</label>
                     <input type="password" id="groq-key" placeholder="Get free at console.groq.com">

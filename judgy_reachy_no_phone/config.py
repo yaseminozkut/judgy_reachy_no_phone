@@ -1,7 +1,8 @@
 """Configuration and constants for Judgy Reachy No Phone app."""
 
+import os
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -13,9 +14,9 @@ class Config:
     DETECTION_CONFIDENCE: float = 0.3  # Higher = fewer false positives
     COOLDOWN_SECONDS: float = 10.0     # Min time between shames
 
-    # API Keys (optional - leave empty for free defaults)
-    GROQ_API_KEY: str = ""             # Get free at console.groq.com
-    ELEVENLABS_API_KEY: str = ""       # Get free at elevenlabs.io
+    # API Keys — read from env (loaded via .env in main.py). UI input still overrides.
+    GROQ_API_KEY: str = field(default_factory=lambda: os.environ.get("GROQ_API_KEY", ""))
+    ELEVENLABS_API_KEY: str = field(default_factory=lambda: os.environ.get("ELEVENLABS_API_KEY", ""))
 
     # TTS settings
     EDGE_TTS_VOICE: str = "en-US-AnaNeural"  # Free voice
@@ -88,14 +89,20 @@ PERSONALITIES = {
         ],
         "shame": {
             "tone": "Explosive, exasperated, commanding",
-            "vocab": ["unacceptable", "unprofessional", "NOW", "enough", "deadline", "work", "focus"],
-            "structure": "Short imperatives. Exclamations. One-word bursts. ALL CAPS for emphasis.",
+            "vocab": ["unacceptable", "unprofessional", "enough", "deadline", "report", "meeting", "focus", "quarter"],
+            "structure": "Punchy sentences. Mix of commands, exasperated statements, and rhetorical shots. Use emphasis sparingly, not everywhere.",
             "examples": [
-                "Put it down!",
-                "We have deadlines!",
                 "This is completely unacceptable!",
-                "Unbelievable! Are you kidding me right now?!",
-                "Work. Not phone!",
+                "The report isn't going to write itself.",
+                "Deadlines are RIGHT THERE.",
+                "I don't pay you to scroll.",
+                "Meeting in five. Phone away.",
+                "Are you serious right now?",
+                "That better be an emergency.",
+                "You're one notification away from HR.",
+                "The quarter is bleeding out.",
+                "Back. To. Work.",
+                "Unbelievable work ethic.",
                 "Focus!"
             ],
         },
@@ -106,9 +113,11 @@ PERSONALITIES = {
                 "Good. Now work.",
                 "Thank you. Was that so hard?",
                 "Acceptable.",
+                "Finally some productivity.",
+                "That's the baseline.",
             ],
         },
-        "avoid": "Never ask questions. Never be playful or sarcastic. You're genuinely furious, not witty.",
+        "avoid": "Never be playful, whimsical, or sarcastic. You're genuinely furious, not witty. No emojis, no slang, no nicknames.",
     },
 
     "sarcastic": {

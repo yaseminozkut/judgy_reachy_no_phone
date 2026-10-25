@@ -182,6 +182,7 @@ class PhoneDetector:
                 frame,
                 persist=True,  # Maintain track IDs across frames
                 conf=confidence_threshold,  # Adaptive confidence
+                iou=0.45,  # Aggressive NMS — kills duplicate boxes on the same phone
                 tracker="bytetrack.yaml",  # ByteTrack algorithm (robust, fast)
                 verbose=False,
                 classes=[self.PHONE_CLASS_ID]  # Only track phones
