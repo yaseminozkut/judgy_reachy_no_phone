@@ -16,7 +16,8 @@ tags:
 models:
  - onnx-community/yolo26m-ONNX
  - Ultralytics/YOLO26
- - meta-llama/Llama-3.1-8B
+ - Qwen/Qwen3-32B
+ - mlx-community/Qwen2.5-3B-Instruct-4bit
 datasets:
  - pollen-robotics/reachy-mini-emotions-library
 ---
@@ -91,10 +92,13 @@ This app is designed to be **100% accessible** regardless of your hardware or bu
 - **Cost**: $0 - Works completely offline for responses
 
 ### ⚡ **Optional Premium Tier** (Free APIs Available)
-- **LLM Responses**: Groq API - Llama 3.1-8B (free tier available)
+- **LLM Responses (Cloud — works everywhere)**: Groq API - Qwen3-32B (`qwen/qwen3.8-27b`, free tier available). Runs on any platform: macOS, Linux, Windows, Intel or ARM.
+- **LLM Responses (Local, Offline — Apple Silicon only)**: MLX-powered [`Qwen2.5-3B-Instruct-4bit`](https://huggingface.co/mlx-community/Qwen2.5-3B-Instruct-4bit) runs fully on-device via Apple's [MLX](https://github.com/ml-explore/mlx) framework — no API key, no internet (toggle with `USE_LOCAL_LLM=1` or the UI switch). **Requires an M1/M2/M3/M4 Mac**; MLX does not run on Linux, Windows, or Intel Macs. If `mlx-lm` isn't installed or fails to load, the app auto-falls back to Groq, then to pre-written lines.
 - **Premium Voice**: ElevenLabs API - 10k chars/month free
 - **Dynamic**: AI-generated responses that adapt to context
-- **Cost**: $0 with free API tiers
+- **Cost**: $0 with free API tiers (or $0 fully offline on Apple Silicon via the local MLX backend)
+
+> **No Mac? No problem.** You still get the full app: Groq cloud LLM (free tier, works on any OS) for dynamic responses, or the 100% Free Tier above (pre-written personality lines, no API key, no LLM — works everywhere, fully offline).
 
 ### 🖥️ **Hardware Flexibility** (GPU Optional)
 - **NVIDIA GPU**: TensorRT acceleration (2-3x faster)
@@ -216,13 +220,18 @@ Measured on **NVIDIA Tesla T4** (Google Colab) for YOLO26m:
 - Industry-standard multi-object tracking with persistent IDs
 - **Adaptive Confidence Thresholds**: 0.5 for initial detection, 0.2 when tracking existing objects
 - **Robust to Occlusion**: Maintains track IDs even when phone temporarily hidden
-- **Real-time Performance**: ~100 FPS camera capture, ~33 FPS detection rate
+- **Real-time Performance**: Detection runs on **every frame** (~100 FPS) so ByteTrack sees a continuous stream — track IDs stay stable and pickup/putdown reactions trigger within tens of milliseconds
 
 ---
 
 ## 🤖 AI-Powered Personality System
 
-**8 Distinct Robot Personalities** powered by Meta's **Llama 3.1-8B-instant** (via [Groq](https://console.groq.com) - free API), each with carefully selected Edge TTS and ElevenLabs voices:
+**8 Distinct Robot Personalities** powered by **Qwen3**. You can switch backends live in the UI:
+- **Groq (cloud, any OS)** — Alibaba's **Qwen3-32B** via [Groq's free API](https://console.groq.com) (`qwen/qwen3.8-27b`). Works on macOS, Linux, and Windows.
+- **Local MLX (offline, Apple Silicon only)** — **[Qwen2.5-3B-Instruct-4bit](https://huggingface.co/mlx-community/Qwen2.5-3B-Instruct-4bit)** running fully on-device via Apple's **[MLX](https://github.com/ml-explore/mlx)** framework. Requires an M-series Mac.
+- **Pre-written (no LLM, any OS)** — curated personality lines; the automatic fallback when no API key is set and no local model is available.
+
+Each personality has carefully selected Edge TTS and ElevenLabs voices:
 
 | Personality | Example Shame | Example Praise |
 |------------|---------------|----------------|
@@ -317,8 +326,9 @@ Each personality has carefully selected voices that match their speaking style a
 └─────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│  LLM Response Generation (Groq / Prewritten)                │
-│  ├─ Llama 3.1-8B-instant (Groq API)                         │
+│  LLM Response Generation (Groq / Local MLX / Prewritten)    │
+│  ├─ Groq: Qwen3-32B (qwen/qwen3.8-27b)                      │
+│  ├─ Local: Qwen2.5-3B-Instruct-4bit via MLX (offline)       │
 │  ├─ Personality-matched prompts                             │
 │  └─ Context-aware shame/praise                              │
 └─────────────────────────────────────────────────────────────┘
@@ -347,11 +357,12 @@ Each personality has carefully selected voices that match their speaking style a
 | Component | Configuration | Notes |
 |-----------|--------------|-------|
 | **Camera Capture** | Laptop/Robot Camera | Max ~100 FPS (0.01s sleep) |
-| **Detection Rate** | Every 3rd frame | Max ~33 FPS detection |
+| **Detection Rate** | Every frame | ByteTrack needs continuity — ~100 FPS detection |
 | **TensorRT Speedup** | NVIDIA GPU optimization | **2-3x faster vs PyTorch** |
-| **Pickup Detection** | 3 consecutive frames | Fast response (~90ms at 33 FPS) |
-| **Putdown Detection** | 15 consecutive frames | Anti-flicker delay (~450ms) |
-| **LLM Response** | Groq (Llama 3.1-8B) | Varies by API load |
+| **Pickup Detection** | 3 consecutive frames | Fast response (~30ms at 100 FPS) |
+| **Putdown Detection** | 15 consecutive frames | Anti-flicker delay (~150ms) |
+| **LLM Response (Cloud)** | Groq (Qwen3-32B, `qwen/qwen3.8-27b`) | Varies by API load |
+| **LLM Response (Local)** | MLX (`Qwen2.5-3B-Instruct-4bit`) | On-device, offline — latency depends on Apple Silicon |
 | **TTS Generation** | Edge TTS / ElevenLabs | Varies by text length |
 
 *Note: Actual FPS depends on hardware (camera quality, CPU/GPU), lighting conditions, and system load.*
@@ -458,7 +469,7 @@ pip install .[llm,premium-tts]
 
 ### Optional: Get Free API Keys
 
-- **Groq** (LLM): [console.groq.com](https://console.groq.com) - Free Llama 3.1-8B access
+- **Groq** (LLM): [console.groq.com](https://console.groq.com) - Free Qwen3-32B access (`qwen/qwen3.8-27b`)
 - **ElevenLabs** (Premium TTS): [elevenlabs.io](https://elevenlabs.io) - 10k chars/month free
 
 ---
@@ -542,8 +553,9 @@ while not stop_event.is_set():
     frame = webcam.read()  # or reachy.media.get_frame()
     latest_frame = frame.copy()
 
-    # Detection every 3rd frame (~33 FPS)
-    if frame_count % 3 == 0:
+    # Detection runs every frame — ByteTrack needs a continuous stream
+    # to maintain stable track IDs across occlusions.
+    if is_monitoring:
         event = detector.process_frame(frame)
 
     # Encode as JPEG for web UI
@@ -581,17 +593,24 @@ if consecutive_no_phone >= 15 and phone_visible:
     return "put_down"  # Trigger praise!
 ```
 
-### 4. **LLM Response** (Groq + Llama 3.1-8B)
+### 4. **LLM Response** (Groq + Qwen3 — or local MLX Qwen2.5-3B)
 ```python
+# Cloud backend — Groq-hosted Qwen3
 response = groq_client.chat.completions.create(
-    model="llama-3.1-8b-instant",
-    max_tokens=20,
-    temperature=1.1,  # High creativity
+    model="qwen/qwen3.8-27b",
+    max_tokens=40,
+    temperature=1.2,  # High creativity
     messages=[
         {"role": "system", "content": personality_prompt},
         {"role": "user", "content": f"Phone pickup #{count}"}
     ]
 )
+
+# Local offline backend — same prompt, runs on-device via Apple MLX
+# (toggle with USE_LOCAL_LLM=1 or the UI switch, no API key required)
+from mlx_lm import load, generate
+model, tokenizer = load("mlx-community/Qwen2.5-3B-Instruct-4bit")
+text = generate(model, tokenizer, prompt=prompt, max_tokens=25, sampler=make_sampler(temp=1.0))
 ```
 
 ### 5. **Text-to-Speech** (Multi-Voice)
@@ -679,9 +698,14 @@ uvicorn
 pydantic
 ```
 
-**Optional - LLM**:
+**Optional - Cloud LLM** (Groq-hosted Qwen3):
 ```
 groq
+```
+
+**Optional - Local Offline LLM** (Apple Silicon only — runs Qwen2.5-3B on-device):
+```
+mlx-lm
 ```
 
 **Optional - Premium TTS**:
@@ -739,8 +763,10 @@ This project was built for the **NVIDIA GTC 2026 Golden Ticket Contest**. Contri
 - **NVIDIA**: CUDA, TensorRT optimization
 - **Ultralytics**: YOLO26m object detection model
 - **ByteTrack**: Multi-object tracking algorithm
-- **Groq**: Free Llama 3.1-8B-instant API
-- **Meta**: Llama 3.1-8B model
+- **Groq**: Free Qwen3-32B API (`qwen/qwen3.8-27b`)
+- **Alibaba Qwen team**: Qwen3-32B and Qwen2.5-3B-Instruct models
+- **Apple MLX**: On-device inference framework for the offline local LLM backend
+- **mlx-community**: 4-bit MLX quantization of [Qwen2.5-3B-Instruct](https://huggingface.co/mlx-community/Qwen2.5-3B-Instruct-4bit)
 - **ElevenLabs**: High-quality TTS voices
 - **Microsoft**: Edge TTS (free tier)
 - **webml-community**: WebGPU demo implementation inspired by [YOLO26-WebGPU](https://huggingface.co/spaces/webml-community/YOLO26-WebGPU)
@@ -785,7 +811,7 @@ Partnership: **Pollen Robotics Reachy Mini x Hugging Face x NVIDIA**
 
 <div align="center">
 
-**Built with ❤️ using NVIDIA TensorRT, YOLO26m, Llama 3.1, and Reachy Mini**
+**Built with ❤️ using NVIDIA TensorRT, YOLO26m, Qwen3 (Groq + local MLX), and Reachy Mini**
 
 *Get off your phone and get back to work! 📱→🤖→💪*
 
