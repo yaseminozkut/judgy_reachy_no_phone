@@ -11,18 +11,18 @@ description = "A Reachy Mini app that detects phone pickups and shames you with 
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "reachy-mini",
-    "opencv-python",
-    "numpy",
-    "ultralytics",
-    "edge-tts",
-    "pydantic"
+    "reachy-mini>=1.7,<2",
+    "opencv-python>=4.9",
+    "numpy>=1.26",
+    "ultralytics>=8.4",
+    "edge-tts>=7.0",
+    "pydantic>=2.0"
 ]
 keywords = ["reachy-mini-app", "productivity"]
 
 [project.optional-dependencies]
-llm = ["groq"]
-premium-tts = ["elevenlabs"]
+llm = ["groq>=1.5"]
+premium-tts = ["elevenlabs>=2.5"]
 
 [project.entry-points."reachy_mini_apps"]
 judgy_reachy_no_phone = "judgy_reachy_no_phone.main:JudgyReachyNoPhone"
